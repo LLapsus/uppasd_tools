@@ -253,6 +253,7 @@ def get_configs(dir_path: str | Path, simid: str | None = None) -> List[pd.DataF
             how='left',
             suffixes=('_restart', '_coord')
         )
+        df_ens.drop(columns=["ens_num"], inplace=True, errors="ignore")
         configs.append(df_ens)
         
     return configs
