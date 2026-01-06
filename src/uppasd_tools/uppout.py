@@ -40,13 +40,19 @@ class UppOut:
         self._prefix_to_simids: dict[str, List[str]] = {}
         self._index_output_files()
         self.prefixes = sorted(self._prefix_to_files.keys())
-        self.simids = sorted(
+        simids = sorted(
             {
                 simid
                 for simids in self._prefix_to_simids.values()
                 for simid in simids
             }
         )
+        if len(simids) > 1:
+            raise ValueError(
+                "Multiple simid values detected in output files: "
+                f"{', '.join(simids)}"
+            )
+        self.simid = simids[0] if simids else None
 
     def _index_output_files(self) -> None:
         for name in self.file_names:
@@ -69,8 +75,13 @@ class UppOut:
         return f"{prefix}.{simid}.out"
 
     def _resolve_path(self, prefix: str, simid: str | None) -> Path:
-        if simid:
-            path = self.dir_path / self._get_uppasd_output_file(prefix, simid)
+        if simid and self.simid and simid != self.simid:
+            raise ValueError(
+                f'simid "{simid}" does not match detected simid "{self.simid}".'
+            )
+        resolved_simid = simid or self.simid
+        if resolved_simid:
+            path = self.dir_path / self._get_uppasd_output_file(prefix, resolved_simid)
         else:
             path = self.dir_path / self._get_file_name(prefix)
         if not path.is_file():
