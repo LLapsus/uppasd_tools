@@ -10,6 +10,20 @@
 - `src/uppasd_tools/analyze.py`: Analysis helpers built on top of `UppOut` data (e.g., neighbor statistics).
 - `src/uppasd_tools/__init__.py`: Public API exports.
 
+## Installation
+
+From the repository root:
+
+```bash
+pip install -e .
+```
+
+Or as a regular install:
+
+```bash
+pip install .
+```
+
 ## Basic usage
 
 ```python
