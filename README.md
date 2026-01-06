@@ -16,7 +16,7 @@
 from uppasd_tools import UppOut
 from uppasd_tools.analyze import analyze_neighbours
 
-upp = UppOut("/path/to/simulation")
+upp = UppOut("/path/to/simulation/output/directory")
 
 # Read output files
 df_avg = upp.read_averages()
@@ -27,7 +27,7 @@ df_struct = upp.read_struct()
 print(upp.simid)
 print(upp.num_atoms, upp.num_atoms_cell, upp.num_atom_types, upp.num_ens)
 
-# Analysis helpers
+# Analyse structure
 neighbors = analyze_neighbours(upp, at_num=1)
 ```
 
