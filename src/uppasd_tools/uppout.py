@@ -29,16 +29,20 @@ class UppOut:
     _prefix_struct = "struct"
 
     def __init__(self, dir_path: str | Path) -> None:
+        # Set up directory path
         self.dir_path = Path(dir_path)
         if not self.dir_path.is_dir():
             raise NotADirectoryError(f'Directory not found: "{self.dir_path}".')
 
+        # List all files in the directory
         self.file_names = sorted(
             entry.name for entry in self.dir_path.iterdir() if entry.is_file()
         )
         self._prefix_to_files: dict[str, List[str]] = {}
         self._prefix_to_simids: dict[str, List[str]] = {}
         self._index_output_files()
+        
+        # Determine prefixes and simid
         self.prefixes = sorted(self._prefix_to_files.keys())
         simids = sorted(
             {
@@ -53,6 +57,32 @@ class UppOut:
                 f"{', '.join(simids)}"
             )
         self.simid = simids[0] if simids else None
+        
+        # Load counts of atoms, atom types, and ensembles
+        self.num_atoms = None       # Total number of atoms in the simulation
+        self.num_atoms_cell = None  # Number of atoms in the unit cell
+        self.num_atom_types = None  # Number of unique atom types
+        self.num_ens = None         # Number of ensembles in the simulation
+        self._load_counts()
+
+    def _load_counts(self) -> None:
+        coord_name = None
+        restart_name = None
+        if self.simid:
+            coord_name = f"{self._prefix_coord}.{self.simid}.out"
+            restart_name = f"{self._prefix_restart}.{self.simid}.out"
+
+        # Load number of atoms and atom types from coord file
+        if coord_name and coord_name in self.file_names:
+            df_coord = self.read_coord()
+            self.num_atoms = len(df_coord)
+            self.num_atoms_cell = len(df_coord["at_num_cell"].unique())
+            self.num_atom_types = len(df_coord["at_type"].unique())
+
+        # Load number of ensembles from restart file
+        if restart_name and restart_name in self.file_names:
+            df_restart = self.read_restart()
+            self.num_ens = len(df_restart["ens_num"].unique())
 
     def _index_output_files(self) -> None:
         for name in self.file_names:
@@ -210,9 +240,9 @@ class UppOut:
             logger.error("Failed to read struct file %s: %s", path, exc)
             raise
 
-    def get_configs(self) -> List[pd.DataFrame]:
+    def final_configs(self) -> List[pd.DataFrame]:
         """ 
-        Get configurations of all ensembles from a given simulation directory.
+        Get final configurations of all ensembles from a restart file.
         Parameters:
         Returns:
             List of pandas DataFrames, each containing the configuration for an ensemble.
@@ -238,4 +268,15 @@ class UppOut:
             configs.append(df_ens)
 
         return configs
+
+    def atom_type(self, at_num: int) -> int:
+        """
+        Return the atom type for a given atom number using the coord data.
+        """
+
+        df_coord = self.read_coord()
+        match = df_coord.loc[df_coord["at_num"] == at_num, "at_type"]
+        if match.empty:
+            raise ValueError(f'Atom number "{at_num}" not found in coord data.')
+        return int(match.iloc[0])
     

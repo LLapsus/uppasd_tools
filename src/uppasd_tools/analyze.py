@@ -25,6 +25,8 @@ def analyze_neighbours(uppout: UppOut, at_num: int = 1) -> dict:
     df = uppout.read_struct()
     # Filter for the specified atom number
     df = df[df["at1_num"] == at_num]
+    if df.empty:
+        raise ValueError(f'No neighbors found for atom number "{at_num}".')
 
     # Group by atom type, distance, and exchange interaction, then count occurrences
     g = (
