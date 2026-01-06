@@ -63,37 +63,28 @@ class UppOut:
             self._prefix_to_files.setdefault(prefix, []).append(name)
             self._prefix_to_simids.setdefault(prefix, []).append(simid)
 
-    def _get_file_name(self, prefix: str) -> str:
-        matches = self._prefix_to_files.get(prefix, [])
-        if not matches:
+    def _get_uppasd_output_file(self, prefix: str) -> str:
+        if not self.simid:
+            raise ValueError("No simid detected in output files.")
+        return f"{prefix}.{self.simid}.out"
+
+    def _resolve_path(self, prefix: str) -> Path:
+        file_name = self._get_uppasd_output_file(prefix)
+        if file_name not in self.file_names:
             raise FileNotFoundError(
-                f'No file starting with "{prefix}" found in "{self.dir_path}".'
+                f'File not found in "{self.dir_path}": "{file_name}".'
             )
-        return sorted(matches)[0]
-
-    def _get_uppasd_output_file(self, prefix: str, simid: str) -> str:
-        return f"{prefix}.{simid}.out"
-
-    def _resolve_path(self, prefix: str, simid: str | None) -> Path:
-        if simid and self.simid and simid != self.simid:
-            raise ValueError(
-                f'simid "{simid}" does not match detected simid "{self.simid}".'
-            )
-        resolved_simid = simid or self.simid
-        if resolved_simid:
-            path = self.dir_path / self._get_uppasd_output_file(prefix, resolved_simid)
-        else:
-            path = self.dir_path / self._get_file_name(prefix)
+        path = self.dir_path / file_name
         if not path.is_file():
             raise FileNotFoundError(f'File not found: "{path}".')
         return path
 
-    def read_averages(self, simid: str | None = None) -> pd.DataFrame:
+    def read_averages(self) -> pd.DataFrame:
         """
         Read an UppASD averages file into a pandas DataFrame.
         """
 
-        path = self._resolve_path(self._prefix_averages, simid)
+        path = self._resolve_path(self._prefix_averages)
         try:
             frame = pd.read_csv(
                 path,
@@ -108,12 +99,12 @@ class UppOut:
             logger.error("Failed to read averages file %s: %s", path, exc)
             raise
 
-    def read_cumulants(self, simid: str | None = None) -> pd.DataFrame:
+    def read_cumulants(self) -> pd.DataFrame:
         """
         Read an UppASD cumulants file into a pandas DataFrame.
         """
 
-        path = self._resolve_path(self._prefix_cumulants, simid)
+        path = self._resolve_path(self._prefix_cumulants)
         try:
             frame = pd.read_csv(
                 path,
@@ -139,12 +130,12 @@ class UppOut:
             logger.error("Failed to read cumulants file %s: %s", path, exc)
             raise
 
-    def read_coord(self, simid: str | None = None) -> pd.DataFrame:
+    def read_coord(self) -> pd.DataFrame:
         """
         Read an UppASD coord file into a pandas DataFrame.
         """
 
-        path = self._resolve_path(self._prefix_coord, simid)
+        path = self._resolve_path(self._prefix_coord)
         try:
             frame = pd.read_csv(
                 path,
@@ -166,12 +157,12 @@ class UppOut:
             logger.error("Failed to read coord file %s: %s", path, exc)
             raise
 
-    def read_restart(self, simid: str | None = None) -> pd.DataFrame:
+    def read_restart(self) -> pd.DataFrame:
         """
         Read an UppASD restart file into a pandas DataFrame.
         """
 
-        path = self._resolve_path(self._prefix_restart, simid)
+        path = self._resolve_path(self._prefix_restart)
         try:
             frame = pd.read_csv(
                 path,
@@ -188,12 +179,12 @@ class UppOut:
             logger.error("Failed to read restart file %s: %s", path, exc)
             raise
 
-    def read_struct(self, simid: str | None = None) -> pd.DataFrame:
+    def read_struct(self) -> pd.DataFrame:
         """
         Read an UppASD struct file into a pandas DataFrame.
         """
 
-        path = self._resolve_path(self._prefix_struct, simid)
+        path = self._resolve_path(self._prefix_struct)
         try:
             frame = pd.read_csv(
                 path,
@@ -219,17 +210,16 @@ class UppOut:
             logger.error("Failed to read struct file %s: %s", path, exc)
             raise
 
-    def get_configs(self, simid: str | None = None) -> List[pd.DataFrame]:
+    def get_configs(self) -> List[pd.DataFrame]:
         """ 
         Get configurations of all ensembles from a given simulation directory.
         Parameters:
-            simid: Simulation identifier used in file names.
         Returns:
             List of pandas DataFrames, each containing the configuration for an ensemble.
         """
 
-        df_coord = self.read_coord(simid)
-        df_restart = self.read_restart(simid)
+        df_coord = self.read_coord()
+        df_restart = self.read_restart()
 
         configs: List[pd.DataFrame] = []
         ensables = df_restart["ens_num"].unique()
