@@ -1,7 +1,7 @@
 ##########################################################################################
 # uppout.py
 #
-# Functions to read and parse output files from the uppasd simulation runs.
+# Class UppOut for reading and parsing UppASD output files.
 #
 ##########################################################################################
 
