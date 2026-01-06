@@ -202,7 +202,7 @@ class UppOut:
                 "rx",
                 "ry",
                 "rz",
-                "jexch",
+                "Jexch",
                 "dist",
             ]
             return frame
