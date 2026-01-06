@@ -13,11 +13,21 @@ from pathlib import Path
 
 ##########################################################################################
 
+# Set up logging
 logger = logging.getLogger(__name__)
+
+# --- UppASD Output File Prefixes ---
+
+_prefix_averages  = "averages"
+_prefix_cumulants = "cumulants"
+_prefix_coord     = "coord"
+_prefix_restart   = "restart"
+
+# --- Helper Functions ---
 
 def _get_file_name(prefix: str, dir_path: str | Path) -> str:
     """
-    Find a file in dir_path whose name starts with prefix.
+    Find a file in dir_path whose name starts with given prefix.
     """
     
     # Ensure the directory exists
@@ -30,6 +40,13 @@ def _get_file_name(prefix: str, dir_path: str | Path) -> str:
         raise FileNotFoundError(f'No file starting with "{prefix}" found in "{path}".')
     return matches[0]
 
+def _get_uppasd_output_file(_prefix: str, simid: str) -> str:
+    """
+    Construct the UppASD output file name based on prefix and simid.
+    """
+    return f"{_prefix}.{simid}.out"
+
+# --- Functions to read and parse UppASD output files ---
 
 def read_averages(dir_path: str | Path, simid: str | None = None) -> pd.DataFrame:
     """
@@ -43,9 +60,9 @@ def read_averages(dir_path: str | Path, simid: str | None = None) -> pd.DataFram
 
     # Resolve file path
     if simid:
-        path = base_path / f"averages.{simid}.out"
+        path = base_path / _get_uppasd_output_file(_prefix_averages, simid)
     else:
-        path = base_path / _get_file_name("averages", base_path)
+        path = base_path / _get_file_name(_prefix_averages, base_path)
 
     # Ensure the file exists
     if not path.is_file():
@@ -86,9 +103,9 @@ def read_cumulants(dir_path: str | Path, simid: str | None = None) -> pd.DataFra
 
     # Resolve file path
     if simid:
-        path = base_path / f"cumulants.{simid}.out"
+        path = base_path / _get_uppasd_output_file(_prefix_cumulants, simid)
     else:
-        path = base_path / _get_file_name("cumulants", base_path)
+        path = base_path / _get_file_name(_prefix_cumulants, base_path)
 
     # Ensure the file exists
     if not path.is_file():
@@ -133,9 +150,9 @@ def read_coord(dir_path: str | Path, simid: str | None = None) -> pd.DataFrame:
 
     # Resolve file path
     if simid:
-        path = base_path / f"coord.{simid}.out"
+        path = base_path / _get_uppasd_output_file(_prefix_coord, simid)
     else:
-        path = base_path / _get_file_name("coord", base_path)
+        path = base_path / _get_file_name(_prefix_coord, base_path)
 
     # Ensure the file exists
     if not path.is_file():
@@ -176,9 +193,9 @@ def read_restart(dir_path: str | Path, simid: str | None = None) -> pd.DataFrame
 
     # Resolve file path
     if simid:
-        path = base_path / f"restart.{simid}.out"
+        path = base_path / _get_uppasd_output_file(_prefix_restart, simid)
     else:
-        path = base_path / _get_file_name("restart", base_path)
+        path = base_path / _get_file_name(_prefix_restart, base_path)
 
     # Ensure the file exists
     if not path.is_file():
@@ -201,6 +218,7 @@ def read_restart(dir_path: str | Path, simid: str | None = None) -> pd.DataFrame
         logger.error("Failed to read restart file %s: %s", path, exc)
         raise
 
+# --- Function to get configurations of all ensembles ---
 
 def get_configs(dir_path: str | Path, simid: str | None = None) -> List[pd.DataFrame]:
     """ 
@@ -221,9 +239,10 @@ def get_configs(dir_path: str | Path, simid: str | None = None) -> List[pd.DataF
     df_coord   = read_coord(path, simid)
     df_restart = read_restart(path, simid)
     
-    configs: List[pd.DataFrame] = []
-    ensables = df_restart['ens_num'].unique()
+    configs: List[pd.DataFrame] = []           # List to hold configurations of all ensembles
+    ensables = df_restart['ens_num'].unique()  # Get unique ensemble numbers
     
+    # Process each ensemble
     for ens in ensables:
         df_ens = df_restart[df_restart['ens_num'] == ens].copy()
         df_ens.reset_index(drop=True, inplace=True)
