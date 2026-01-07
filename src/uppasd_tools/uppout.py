@@ -28,35 +28,53 @@ class UppOut:
     _prefix_restart = "restart"
     _prefix_struct = "struct"
 
-    def __init__(self, dir_path: str | Path) -> None:
+    def __init__(self, dir_path: str | Path, simid: str | None = None) -> None:
         # Set up directory path
         self.dir_path = Path(dir_path)
         if not self.dir_path.is_dir():
             raise NotADirectoryError(f'Directory not found: "{self.dir_path}".')
 
+        self.simid = None
+        if simid is not None:
+            self._validate_simid(simid)
+            self.simid = simid
+
         # List all files in the directory
-        self.file_names = sorted(
-            entry.name for entry in self.dir_path.iterdir() if entry.is_file()
-        )
+        if self.simid is None:
+            self.file_names = sorted(
+                entry.name for entry in self.dir_path.iterdir() if entry.is_file()
+            )
+        else:
+            self.file_names = sorted(
+                entry.name
+                for entry in self.dir_path.iterdir()
+                if entry.is_file() and self._matches_simid(entry.name, self.simid)
+            )
+            if not self.file_names:
+                raise FileNotFoundError(
+                    f'No output files found for simid "{self.simid}" in '
+                    f'"{self.dir_path}".'
+                )
         self._prefix_to_files: dict[str, List[str]] = {}
         self._prefix_to_simids: dict[str, List[str]] = {}
         self._index_output_files()
         
         # Determine prefixes and simid
         self.prefixes = sorted(self._prefix_to_files.keys())
-        simids = sorted(
-            {
-                simid
-                for simids in self._prefix_to_simids.values()
-                for simid in simids
-            }
-        )
-        if len(simids) > 1:
-            raise ValueError(
-                "Multiple simid values detected in output files: "
-                f"{', '.join(simids)}"
+        if self.simid is None:
+            simids = sorted(
+                {
+                    simid
+                    for simids in self._prefix_to_simids.values()
+                    for simid in simids
+                }
             )
-        self.simid = simids[0] if simids else None
+            if len(simids) > 1:
+                raise ValueError(
+                    "Multiple simid values detected in output files: "
+                    f"{', '.join(simids)}\n Please specify a simid to use."
+                )
+            self.simid = simids[0] if simids else None
         
         # Load counts of atoms, atom types, and ensembles
         self.num_atoms = None       # Total number of atoms in the simulation
@@ -90,8 +108,22 @@ class UppOut:
             if len(parts) != 3 or parts[2] != "out":
                 continue
             prefix, simid = parts[0], parts[1]
+            if self.simid is not None and simid != self.simid:
+                continue
             self._prefix_to_files.setdefault(prefix, []).append(name)
             self._prefix_to_simids.setdefault(prefix, []).append(simid)
+
+    @staticmethod
+    def _validate_simid(simid: str) -> None:
+        if not isinstance(simid, str):
+            raise TypeError("simid must be a string with 8 characters.")
+        if len(simid) != 8:
+            raise ValueError("simid must be a string with 8 characters.")
+
+    @staticmethod
+    def _matches_simid(name: str, simid: str) -> bool:
+        parts = name.split(".")
+        return len(parts) == 3 and parts[1] == simid and parts[2] == "out"
 
     def _get_uppasd_output_file(self, prefix: str) -> str:
         if not self.simid:
