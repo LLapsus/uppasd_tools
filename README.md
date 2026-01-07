@@ -31,6 +31,8 @@ from uppasd_tools import UppOut
 from uppasd_tools.analyze import analyze_neighbours
 
 upp = UppOut("/path/to/simulation/output/directory")
+# Or target a specific simid (8-character string, spaces allowed)
+upp = UppOut("/path/to/simulation/output/directory", simid="00000001")
 
 # Read output files
 df_avg = upp.read_averages()
@@ -48,3 +50,5 @@ neighbors = analyze_neighbours(upp, at_num=1)
 Notes:
 - Output files must follow the `prefix.simid.out` naming scheme and share a single `simid`.
 - If multiple different `simid` values are detected, `UppOut` raises an error.
+- You can pass `simid` to only index files with that identifier; it must be a string of exactly 8 characters.
+- When `simid` is provided and no matching files exist, `UppOut` raises an error.
