@@ -1,0 +1,13 @@
+name: atomic
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas
+  - matplotlib
+  - jupyterlab
+  - ipywidgets
+  - py3Dmol
+  - ase
+  - nglview
