@@ -81,6 +81,9 @@ class UppOut:
         self.num_atoms_cell = None  # Number of atoms in the unit cell
         self.num_atom_types = None  # Number of unique atom types
         self.num_ens = None         # Number of ensembles in the simulation
+        self.xrange = None          # (min, max) x-coordinates from coord file
+        self.yrange = None          # (min, max) y-coordinates from coord file
+        self.zrange = None          # (min, max) z-coordinates from coord file
         self._load_counts()
 
     def _load_counts(self) -> None:
@@ -96,6 +99,9 @@ class UppOut:
             self.num_atoms = len(df_coord)
             self.num_atoms_cell = len(df_coord["at_num_cell"].unique())
             self.num_atom_types = len(df_coord["at_type"].unique())
+            self.xrange = (float(df_coord["x"].min()), float(df_coord["x"].max()))
+            self.yrange = (float(df_coord["y"].min()), float(df_coord["y"].max()))
+            self.zrange = (float(df_coord["z"].min()), float(df_coord["z"].max()))
 
         # Load number of ensembles from restart file
         if restart_name and restart_name in self.file_names:
