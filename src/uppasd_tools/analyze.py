@@ -12,6 +12,32 @@ import pandas as pd
 
 ##########################################################################################
 
+def get_neighbors(uppout: UppOut, at_num: int = 1) -> dict:
+    """
+    Get neighbors for a given atom number from the struct file.
+    Parameters:
+        uppout (UppOut): An instance of the UppOut class containing parsed output data.
+        at_num (int): Atom number to get neighbors for.
+    Returns:
+        dict: A dictionary with neighbor atom numbers, types, and relative positions.
+    """
+    df = uppout.read_struct()
+    df = df[df["at1_num"] == at_num]
+    if df.empty:
+        raise ValueError(f'No neighbors found for atom number "{at_num}".')
+
+    positions = [
+        np.array([row["rx"], row["ry"], row["rz"]], dtype=float)
+        for _, row in df.iterrows()
+    ]
+
+    return {
+        "at_num": df["at2_num"].tolist(),
+        "at_type": df["at2_type"].tolist(),
+        "position": positions,
+    }
+
+
 def analyze_neighbours(uppout: UppOut, at_num: int = 1) -> dict:
     """
     Analyze neighbor data for a given atom number from the structure DataFrame.
