@@ -19,23 +19,18 @@ def get_neighbors(uppout: UppOut, at_num: int = 1) -> dict:
         uppout (UppOut): An instance of the UppOut class containing parsed output data.
         at_num (int): Atom number to get neighbors for.
     Returns:
-        dict: A dictionary with neighbor atom numbers, types, and relative positions.
+        dict: A dictionary mapping neighbor atom numbers to [atom_type, position, Jexch].
     """
     df = uppout.read_struct()
     df = df[df["at1_num"] == at_num]
     if df.empty:
         raise ValueError(f'No neighbors found for atom number "{at_num}".')
 
-    positions = [
-        np.array([row["rx"], row["ry"], row["rz"]], dtype=float)
-        for _, row in df.iterrows()
-    ]
-
-    return {
-        "at_num": df["at2_num"].tolist(),
-        "at_type": df["at2_type"].tolist(),
-        "position": positions,
-    }
+    neighbors = {}
+    for _, row in df.iterrows():
+        pos = np.array([row["rx"], row["ry"], row["rz"]], dtype=float)
+        neighbors[int(row["at2_num"])] = [int(row["at2_type"]), pos, float(row["Jexch"])]
+    return neighbors
 
 
 def analyze_neighbours(uppout: UppOut, at_num: int = 1) -> dict:
