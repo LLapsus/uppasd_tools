@@ -25,6 +25,7 @@ class UppOut:
     _prefix_averages = "averages"
     _prefix_cumulants = "cumulants"
     _prefix_coord = "coord"
+    _prefix_energy = "stdenergy"
     _prefix_restart = "restart"
     _prefix_struct = "struct"
 
@@ -196,6 +197,39 @@ class UppOut:
             return frame
         except Exception as exc:
             logger.error("Failed to read cumulants file %s: %s", path, exc)
+            raise
+
+    def read_energy(self) -> pd.DataFrame:
+        """
+        Read an UppASD stdenergy file into a pandas DataFrame.
+        """
+
+        path = self._resolve_path(self._prefix_energy)
+        try:
+            frame = pd.read_csv(
+                path,
+                sep=r"\s+",
+                engine="python",
+                header=0,
+                skip_blank_lines=True,
+            )
+            frame.columns = [
+                "iter",
+                "tot",
+                "exch",
+                "aniso",
+                "DM",
+                "PD",
+                "BiqDM",
+                "BQ",
+                "dip",
+                "Zeeman",
+                "LSF",
+                "chir",
+            ]
+            return frame
+        except Exception as exc:
+            logger.error("Failed to read stdenergy file %s: %s", path, exc)
             raise
 
     def read_coord(self) -> pd.DataFrame:
