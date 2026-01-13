@@ -1,7 +1,9 @@
 ##########################################################################################
-# analyze.py
+# collect.py
 #
-# Functions for analyzing UppASD output data.
+# Functions to collect averaged UppASD output data from multiple simulation runs.
+# Can be used to aggregate data from parameter sweeps into a single DataFrame.
+# Examples: temperature dependces, magnetic field scans, hysteresis loops, etc.
 #
 ##########################################################################################
 
