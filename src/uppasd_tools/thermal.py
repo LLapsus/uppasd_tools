@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-import fnmatch
 import logging
 import re
 from pathlib import Path
@@ -20,31 +19,12 @@ from .uppout import UppOut
 
 logger = logging.getLogger(__name__)
 
-TEMPERATURE_RE = re.compile(r".*_T(\d+(?:\.\d+)?)$")
 AVERAGES_PREFIX = "averages"
+TEMPLATE_FIELD_RE = re.compile(r"{([A-Za-z_][A-Za-z0-9_]*)}")
+INT_RE = re.compile(r"^-?\d+$")
+FLOAT_RE = re.compile(r"^-?(?:\d+\.\d*|\d*\.\d+|\d+)(?:[eE][+-]?\d+)?$")
 
 ##########################################################################################
-
-def scan_run_directories(root: str | Path) -> list[tuple[float, Path]]:
-    """Scan immediate subdirectories under root and extract temperatures."""
-    root_path = Path(root)
-    runs: list[tuple[float, Path]] = []
-    for entry in root_path.iterdir():
-        if not entry.is_dir():
-            continue
-        match = TEMPERATURE_RE.match(entry.name)
-        if not match:
-            continue
-        runs.append((float(match.group(1)), entry))
-    return runs
-
-
-def _extract_temperature_from_name(name: str) -> float:
-    match = TEMPERATURE_RE.match(name)
-    if not match:
-        raise ValueError(f'Could not extract temperature from directory "{name}".')
-    return float(match.group(1))
-
 
 def _latest_averages_simid(run_dir: Path) -> str:
     latest_simid: str | None = None
@@ -71,10 +51,36 @@ def _latest_averages_simid(run_dir: Path) -> str:
     return latest_simid
 
 
-def read_averages_last_line(run_dir: str | Path) -> dict[str, float]:
-    """Read the latest averages file in a run directory and parse its last line."""
+def _compile_name_template(template: str) -> tuple[re.Pattern[str], list[str]]:
+    fields = [match.group(1) for match in TEMPLATE_FIELD_RE.finditer(template)]
+    if not fields:
+        raise ValueError("Template must include at least one {field} placeholder.")
+    if len(set(fields)) != len(fields):
+        raise ValueError("Template placeholders must be unique.")
+
+    pattern_parts: list[str] = ["^"]
+    last_end = 0
+    for match in TEMPLATE_FIELD_RE.finditer(template):
+        pattern_parts.append(re.escape(template[last_end:match.start()]))
+        field = match.group(1)
+        pattern_parts.append(f"(?P<{field}>[^/]+)")
+        last_end = match.end()
+    pattern_parts.append(re.escape(template[last_end:]))
+    pattern_parts.append("$")
+
+    return re.compile("".join(pattern_parts)), fields
+
+
+def _coerce_template_value(value: str) -> float | int | str:
+    if INT_RE.match(value):
+        return int(value)
+    if FLOAT_RE.match(value):
+        return float(value)
+    return value
+
+
+def _read_averages_last_row(run_dir: str | Path) -> dict[str, float]:
     run_path = Path(run_dir)
-    temperature = _extract_temperature_from_name(run_path.name)
     simid = _latest_averages_simid(run_path)
     uppout = UppOut(run_path, simid=simid)
     frame = uppout.read_averages()
@@ -84,7 +90,6 @@ def read_averages_last_line(run_dir: str | Path) -> dict[str, float]:
         )
     last_row = frame.iloc[-1]
     return {
-        "T": temperature,
         "Mx": float(last_row["Mx"]),
         "My": float(last_row["My"]),
         "Mz": float(last_row["Mz"]),
@@ -95,21 +100,29 @@ def read_averages_last_line(run_dir: str | Path) -> dict[str, float]:
 
 def collect_averages(
     root: str | Path,
-    pattern: str = "*_T*",
+    name_template: str,
     strict: bool = True,
 ) -> pd.DataFrame:
-    """Collect averages from all run directories under root."""
+    """Collect averages from run directories matching a name template."""
     root_path = Path(root)
-    columns = ["T", "Mx", "My", "Mz", "M", "M_std"]
-    rows: list[dict[str, float]] = []
+    name_pattern, fields = _compile_name_template(name_template)
+    columns = fields + ["Mx", "My", "Mz", "M", "M_std"]
+    rows: list[dict[str, float | int | str]] = []
 
     for entry in root_path.iterdir():
         if not entry.is_dir():
             continue
-        if not fnmatch.fnmatch(entry.name, pattern):
+        match = name_pattern.match(entry.name)
+        if not match:
             continue
         try:
-            rows.append(read_averages_last_line(entry))
+            variables = {
+                key: _coerce_template_value(value)
+                for key, value in match.groupdict().items()
+            }
+            averages = _read_averages_last_row(entry)
+            row = {**variables, **averages}
+            rows.append(row)
         except Exception as exc:
             if strict:
                 raise
@@ -119,6 +132,6 @@ def collect_averages(
         return pd.DataFrame(columns=columns)
 
     frame = pd.DataFrame(rows, columns=columns)
-    frame.sort_values("T", inplace=True)
+    frame.sort_values(fields, inplace=True)
     frame.reset_index(drop=True, inplace=True)
     return frame
