@@ -19,6 +19,7 @@ from .uppout import UppOut
 
 logger = logging.getLogger(__name__)
 
+# Template regex patterns
 TEMPLATE_FIELD_RE = re.compile(r"{([A-Za-z_][A-Za-z0-9_]*)}")
 INT_RE = re.compile(r"^-?\d+$")
 FLOAT_RE = re.compile(r"^-?(?:\d+\.\d*|\d*\.\d+|\d+)(?:[eE][+-]?\d+)?$")
@@ -127,6 +128,55 @@ def _read_cumulants_mean(
     }
 
 
+def _read_energy_mean(
+    run_dir: str | Path,
+    simid: str | None = None,
+    start: int | None = None,
+    end: int | None = None,
+    step: int | None = None,
+) -> dict[str, float]:
+    run_path = Path(run_dir)
+    uppout = UppOut(run_path, simid=simid) if simid else UppOut(run_path)
+    frame = uppout.read_energy()
+    if frame.empty:
+        raise ValueError(
+            f'No data rows found in stdenergy file for "{run_path}".'
+        )
+    slice_rows = frame.iloc[slice(start, end, step)]
+    if slice_rows.empty:
+        raise ValueError(
+            f'No data rows found in selected range for "{run_path}".'
+        )
+    mean_row = slice_rows[
+        [
+            "tot",
+            "exch",
+            "aniso",
+            "DM",
+            "PD",
+            "BiqDM",
+            "BQ",
+            "dip",
+            "Zeeman",
+            "LSF",
+            "chir",
+        ]
+    ].mean()
+    return {
+        "tot": float(mean_row["tot"]),
+        "exch": float(mean_row["exch"]),
+        "aniso": float(mean_row["aniso"]),
+        "DM": float(mean_row["DM"]),
+        "PD": float(mean_row["PD"]),
+        "BiqDM": float(mean_row["BiqDM"]),
+        "BQ": float(mean_row["BQ"]),
+        "dip": float(mean_row["dip"]),
+        "Zeeman": float(mean_row["Zeeman"]),
+        "LSF": float(mean_row["LSF"]),
+        "chir": float(mean_row["chir"]),
+    }
+
+
 def collect_averages(
     root: str | Path,
     name_template: str,
@@ -228,8 +278,8 @@ def collect_cumulants(
 
     Returns:
         DataFrame containing one row per run directory. Columns include the
-        extracted template variables and the averaged values for `M`, `M2`,
-        `M4`, `Binder`, `chi`, `Cv`, `E`, `E_exch`, and `E_lsf`.
+        extracted template variables and the averaged values for 
+        `M`, `M2`, `M4`, `Binder`, `chi`, `Cv`, `E`, `E_exch`, and `E_lsf`.
     """
     root_path = Path(root)
     name_pattern, fields = _compile_name_template(name_template)
@@ -261,6 +311,93 @@ def collect_cumulants(
                 step=step,
             )
             row = {**variables, **cumulants}
+            rows.append(row)
+        except Exception as exc:
+            if strict:
+                raise
+            logger.warning("Skipping run %s: %s", entry, exc)
+
+    # If no valid rows were collected, return an empty DataFrame
+    if not rows:
+        return pd.DataFrame(columns=columns)
+
+    # Create and return the final DataFrame
+    frame = pd.DataFrame(rows, columns=columns)
+    frame.sort_values(fields, inplace=True)
+    frame.reset_index(drop=True, inplace=True)
+    return frame
+
+
+def collect_energies(
+    root: str | Path,
+    name_template: str,
+    simid: str | None = None,
+    start: int | None = None,
+    end: int | None = None,
+    step: int | None = None,
+    strict: bool = True,
+) -> pd.DataFrame:
+    """
+    Collect averaged energy columns from run directories matching a name template.
+
+    Parameters:
+        root: Directory containing run subdirectories.
+        name_template: Folder name template with `{field}` placeholders used to
+            extract variables into columns (e.g., "run_T{T}_P{P}").
+        simid: Optional UppASD simid to select a specific output set within each
+            run directory. When None, UppOut auto-detects the simid.
+        start: Start index for row slicing (inclusive) before averaging.
+        end: End index for row slicing (exclusive) before averaging.
+        step: Step for row slicing before averaging.
+        strict: When True, raise on any bad run; when False, skip with a warning.
+
+    Returns:
+        DataFrame containing one row per run directory. Columns include the
+        extracted template variables and the averaged values for 
+        `tot`, `exch`, `aniso`, `DM`, `PD`, `BiqDM`, `BQ`, `dip`, `Zeeman`, `LSF`, and `chir`.
+    """
+    root_path = Path(root)
+    name_pattern, fields = _compile_name_template(name_template)
+    columns = fields + [
+        "tot",
+        "exch",
+        "aniso",
+        "DM",
+        "PD",
+        "BiqDM",
+        "BQ",
+        "dip",
+        "Zeeman",
+        "LSF",
+        "chir",
+    ]
+    rows: list[dict[str, float | int | str]] = []
+    
+    # Find run directories matching the name pattern
+    run_dirs = [
+        entry
+        for entry in root_path.iterdir()
+        if entry.is_dir() and name_pattern.match(entry.name)
+    ]
+
+    # Iterate over run directories and collect energies
+    for entry in run_dirs:
+        match = name_pattern.match(entry.name)
+        if match is None:
+            continue
+        try:
+            variables = {
+                key: _coerce_template_value(value)
+                for key, value in match.groupdict().items()
+            }
+            energies = _read_energy_mean(
+                entry,
+                simid=simid,
+                start=start,
+                end=end,
+                step=step,
+            )
+            row = {**variables, **energies}
             rows.append(row)
         except Exception as exc:
             if strict:
