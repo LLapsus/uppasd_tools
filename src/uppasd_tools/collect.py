@@ -159,12 +159,15 @@ def collect_averages(
     name_pattern, fields = _compile_name_template(name_template)
     columns = fields + ["Mx", "My", "Mz", "M", "M_std"]
     rows: list[dict[str, float | int | str]] = []
+    
+    # Find run directories matching the name pattern
     run_dirs = [
         entry
         for entry in root_path.iterdir()
         if entry.is_dir() and name_pattern.match(entry.name)
     ]
 
+    # Iterate over run directories and collect averages
     for entry in run_dirs:
         match = name_pattern.match(entry.name)
         if match is None:
@@ -188,9 +191,11 @@ def collect_averages(
                 raise
             logger.warning("Skipping run %s: %s", entry, exc)
 
+    # If no valid rows were collected, return an empty DataFrame
     if not rows:
         return pd.DataFrame(columns=columns)
 
+    # Create and return the final DataFrame
     frame = pd.DataFrame(rows, columns=columns)
     frame.sort_values(fields, inplace=True)
     frame.reset_index(drop=True, inplace=True)
@@ -230,12 +235,15 @@ def collect_cumulants(
     name_pattern, fields = _compile_name_template(name_template)
     columns = fields + ["M", "M2", "M4", "Binder", "chi", "Cv", "E", "E_exch", "E_lsf"]
     rows: list[dict[str, float | int | str]] = []
+    
+    # Find run directories matching the name pattern
     run_dirs = [
         entry
         for entry in root_path.iterdir()
         if entry.is_dir() and name_pattern.match(entry.name)
     ]
 
+    # Iterate over run directories and collect cumulants
     for entry in run_dirs:
         match = name_pattern.match(entry.name)
         if match is None:
@@ -259,9 +267,11 @@ def collect_cumulants(
                 raise
             logger.warning("Skipping run %s: %s", entry, exc)
 
+    # If no valid rows were collected, return an empty DataFrame
     if not rows:
         return pd.DataFrame(columns=columns)
 
+    # Create and return the final DataFrame
     frame = pd.DataFrame(rows, columns=columns)
     frame.sort_values(fields, inplace=True)
     frame.reset_index(drop=True, inplace=True)
