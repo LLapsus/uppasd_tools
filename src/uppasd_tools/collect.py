@@ -107,8 +107,8 @@ def collect_averages(
 
     Returns:
         DataFrame containing one row per run directory. Columns include the
-        extracted template variables and the averaged values for `Mx`, `My`,
-        `Mz`, `M`, and `M_std`.
+        extracted template variables and the averaged values for 
+        `Mx`, `My`, `Mz`, `M`, and `M_std`.
     """
     root_path = Path(root)
     name_pattern, fields = _compile_name_template(name_template)
