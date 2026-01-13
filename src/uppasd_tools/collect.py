@@ -19,37 +19,11 @@ from .uppout import UppOut
 
 logger = logging.getLogger(__name__)
 
-AVERAGES_PREFIX = "averages"
 TEMPLATE_FIELD_RE = re.compile(r"{([A-Za-z_][A-Za-z0-9_]*)}")
 INT_RE = re.compile(r"^-?\d+$")
 FLOAT_RE = re.compile(r"^-?(?:\d+\.\d*|\d*\.\d+|\d+)(?:[eE][+-]?\d+)?$")
 
 ##########################################################################################
-
-def _latest_averages_simid(run_dir: Path) -> str:
-    latest_simid: str | None = None
-    latest_mtime: float | None = None
-    for entry in run_dir.iterdir():
-        if not entry.is_file():
-            continue
-        parts = entry.name.split(".")
-        if len(parts) != 3:
-            continue
-        if parts[0] != AVERAGES_PREFIX or parts[2] != "out":
-            continue
-        simid = parts[1]
-        if len(simid) != 8:
-            continue
-        mtime = entry.stat().st_mtime
-        if latest_simid is None or mtime > latest_mtime:
-            latest_simid = simid
-            latest_mtime = mtime
-    if latest_simid is None:
-        raise FileNotFoundError(
-            f'No "{AVERAGES_PREFIX}.*.out" files found in "{run_dir}".'
-        )
-    return latest_simid
-
 
 def _compile_name_template(template: str) -> tuple[re.Pattern[str], list[str]]:
     fields = [match.group(1) for match in TEMPLATE_FIELD_RE.finditer(template)]
@@ -79,48 +53,89 @@ def _coerce_template_value(value: str) -> float | int | str:
     return value
 
 
-def _read_averages_last_row(run_dir: str | Path) -> dict[str, float]:
+def _read_averages_mean(
+    run_dir: str | Path,
+    simid: str | None = None,
+    start: int | None = None,
+    end: int | None = None,
+    step: int | None = None,
+) -> dict[str, float]:
     run_path = Path(run_dir)
-    simid = _latest_averages_simid(run_path)
-    uppout = UppOut(run_path, simid=simid)
+    uppout = UppOut(run_path, simid=simid) if simid else UppOut(run_path)
     frame = uppout.read_averages()
     if frame.empty:
         raise ValueError(
             f'No data rows found in averages file for "{run_path}".'
         )
-    last_row = frame.iloc[-1]
+    slice_rows = frame.iloc[slice(start, end, step)]
+    if slice_rows.empty:
+        raise ValueError(
+            f'No data rows found in selected range for "{run_path}".'
+        )
+    mean_row = slice_rows[["Mx", "My", "Mz", "M", "M_stdv"]].mean()
     return {
-        "Mx": float(last_row["Mx"]),
-        "My": float(last_row["My"]),
-        "Mz": float(last_row["Mz"]),
-        "M": float(last_row["M"]),
-        "M_std": float(last_row["M_stdv"]),
+        "Mx": float(mean_row["Mx"]),
+        "My": float(mean_row["My"]),
+        "Mz": float(mean_row["Mz"]),
+        "M": float(mean_row["M"]),
+        "M_std": float(mean_row["M_stdv"]),
     }
 
 
 def collect_averages(
     root: str | Path,
     name_template: str,
+    simid: str | None = None,
+    start: int | None = None,
+    end: int | None = None,
+    step: int | None = None,
     strict: bool = True,
 ) -> pd.DataFrame:
-    """Collect averages from run directories matching a name template."""
+    """
+    Collect averaged output columns from run directories matching a name template.
+
+    Parameters:
+        root: Directory containing run subdirectories.
+        name_template: Folder name template with `{field}` placeholders used to
+            extract variables into columns (e.g., "run_T{T}_P{P}").
+        simid: Optional UppASD simid to select a specific output set within each
+            run directory. When None, UppOut auto-detects the simid.
+        start: Start index for row slicing (inclusive) before averaging.
+        end: End index for row slicing (exclusive) before averaging.
+        step: Step for row slicing before averaging.
+        strict: When True, raise on any bad run; when False, skip with a warning.
+
+    Returns:
+        DataFrame containing one row per run directory. Columns include the
+        extracted template variables and the averaged values for `Mx`, `My`,
+        `Mz`, `M`, and `M_std`.
+    """
     root_path = Path(root)
     name_pattern, fields = _compile_name_template(name_template)
     columns = fields + ["Mx", "My", "Mz", "M", "M_std"]
     rows: list[dict[str, float | int | str]] = []
+    run_dirs = [
+        entry
+        for entry in root_path.iterdir()
+        if entry.is_dir() and name_pattern.match(entry.name)
+    ]
 
-    for entry in root_path.iterdir():
-        if not entry.is_dir():
-            continue
+    for entry in run_dirs:
         match = name_pattern.match(entry.name)
-        if not match:
+        if match is None:
             continue
         try:
             variables = {
                 key: _coerce_template_value(value)
                 for key, value in match.groupdict().items()
             }
-            averages = _read_averages_last_row(entry)
+            averages = _read_averages_mean(
+                entry,
+                simid=simid,
+                start=start,
+                end=end,
+                step=step,
+            )
             row = {**variables, **averages}
             rows.append(row)
         except Exception as exc:
@@ -134,4 +149,5 @@ def collect_averages(
     frame = pd.DataFrame(rows, columns=columns)
     frame.sort_values(fields, inplace=True)
     frame.reset_index(drop=True, inplace=True)
+    
     return frame

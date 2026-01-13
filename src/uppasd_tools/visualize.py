@@ -29,6 +29,7 @@ def plot_coord(
 ):
     """
     Render atoms from UppOut coord data using py3Dmol.
+    
     Parameters:
         uppout (UppOut): An instance of the UppOut class containing parsed output data.
         x, y, z (str): Column names for the x, y, z coordinates.
@@ -42,6 +43,7 @@ def plot_coord(
         symbol_to_scale (dict): Optional mapping from symbol to scale.
         show_sticks (bool): Whether to show sticks between atoms.
         stick_radius (float): Radius of the sticks if shown.
+        
     Returns:
         py3Dmol.view: A py3Dmol view object with the rendered atoms.
     """
