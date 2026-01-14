@@ -11,6 +11,21 @@ from typing import List
 import pandas as pd
 from pathlib import Path
 
+from .uppout_schema import (
+    AVERAGES_COLUMNS,
+    AVERAGES_PREFIX,
+    COORD_COLUMNS,
+    COORD_PREFIX,
+    CUMULANTS_COLUMNS,
+    CUMULANTS_PREFIX,
+    ENERGY_COLUMNS,
+    ENERGY_PREFIX,
+    RESTART_COLUMNS,
+    RESTART_PREFIX,
+    STRUCT_COLUMNS,
+    STRUCT_PREFIX,
+)
+
 ##########################################################################################
 
 # Set up logging
@@ -22,12 +37,12 @@ class UppOut:
     """
 
     # Prefixes for different UppASD output files
-    _prefix_averages = "averages"
-    _prefix_cumulants = "cumulants"
-    _prefix_coord = "coord"
-    _prefix_energy = "stdenergy"
-    _prefix_restart = "restart"
-    _prefix_struct = "struct"
+    _prefix_averages = AVERAGES_PREFIX
+    _prefix_cumulants = CUMULANTS_PREFIX
+    _prefix_coord = COORD_PREFIX
+    _prefix_energy = ENERGY_PREFIX
+    _prefix_restart = RESTART_PREFIX
+    _prefix_struct = STRUCT_PREFIX
 
     def __init__(self, dir_path: str | Path, simid: str | None = None) -> None:
         # Set up directory path
@@ -162,7 +177,7 @@ class UppOut:
                 header=0,
                 skip_blank_lines=True,
             )
-            frame.columns = ["iter", "Mx", "My", "Mz", "M", "M_stdv"]
+            frame.columns = AVERAGES_COLUMNS
             return frame
         except Exception as exc:
             logger.error("Failed to read averages file %s: %s", path, exc)
@@ -182,18 +197,7 @@ class UppOut:
                 header=0,
                 skip_blank_lines=True,
             )
-            frame.columns = [
-                "iter",
-                "M",
-                "M2",
-                "M4",
-                "Binder",
-                "chi",
-                "Cv",
-                "E",
-                "E_exch",
-                "E_lsf",
-            ]
+            frame.columns = CUMULANTS_COLUMNS
             return frame
         except Exception as exc:
             logger.error("Failed to read cumulants file %s: %s", path, exc)
@@ -213,20 +217,7 @@ class UppOut:
                 header=0,
                 skip_blank_lines=True,
             )
-            frame.columns = [
-                "iter",
-                "tot",
-                "exch",
-                "aniso",
-                "DM",
-                "PD",
-                "BiqDM",
-                "BQ",
-                "dip",
-                "Zeeman",
-                "LSF",
-                "chir",
-            ]
+            frame.columns = ENERGY_COLUMNS
             return frame
         except Exception as exc:
             logger.error("Failed to read stdenergy file %s: %s", path, exc)
@@ -246,14 +237,7 @@ class UppOut:
                 header=None,
                 skip_blank_lines=True,
             )
-            frame.columns = [
-                "at_num",
-                "x",
-                "y",
-                "z",
-                "at_type",
-                "at_num_cell",
-            ]
+            frame.columns = COORD_COLUMNS
             return frame
         except Exception as exc:
             logger.error("Failed to read coord file %s: %s", path, exc)
@@ -275,7 +259,7 @@ class UppOut:
                 comment="#",
             )
             frame = frame.iloc[:, 1:]
-            frame.columns = ["ens_num", "at_num", "mom", "mx", "my", "mz"]
+            frame.columns = RESTART_COLUMNS
             return frame
         except Exception as exc:
             logger.error("Failed to read restart file %s: %s", path, exc)
@@ -296,17 +280,7 @@ class UppOut:
                 skip_blank_lines=True,
                 comment="#",
             )
-            frame.columns = [
-                "at1_num",
-                "at2_num",
-                "at1_type",
-                "at2_type",
-                "rx",
-                "ry",
-                "rz",
-                "Jexch",
-                "dist",
-            ]
+            frame.columns = STRUCT_COLUMNS
             return frame
         except Exception as exc:
             logger.error("Failed to read struct file %s: %s", path, exc)

@@ -16,6 +16,7 @@ from pathlib import Path
 import pandas as pd
 
 from .uppout import UppOut
+from .uppout_schema import AVERAGES_COLUMNS, CUMULANTS_COLUMNS, ENERGY_COLUMNS
 
 ##########################################################################################
 
@@ -75,13 +76,14 @@ def _read_averages_mean(
         raise ValueError(
             f'No data rows found in selected range for "{run_path}".'
         )
-    mean_row = slice_rows[["Mx", "My", "Mz", "M", "M_stdv"]].mean()
+    mean_columns = [column for column in AVERAGES_COLUMNS if column != "iter"]
+    output_columns = [
+        "M_std" if column == "M_stdv" else column for column in mean_columns
+    ]
+    mean_row = slice_rows[mean_columns].mean()
     return {
-        "Mx": float(mean_row["Mx"]),
-        "My": float(mean_row["My"]),
-        "Mz": float(mean_row["Mz"]),
-        "M": float(mean_row["M"]),
-        "M_std": float(mean_row["M_stdv"]),
+        output: float(mean_row[column])
+        for column, output in zip(mean_columns, output_columns)
     }
 
 
@@ -104,30 +106,9 @@ def _read_cumulants_mean(
         raise ValueError(
             f'No data rows found in selected range for "{run_path}".'
         )
-    mean_row = slice_rows[
-        [
-            "M",
-            "M2",
-            "M4",
-            "Binder",
-            "chi",
-            "Cv",
-            "E",
-            "E_exch",
-            "E_lsf",
-        ]
-    ].mean()
-    return {
-        "M": float(mean_row["M"]),
-        "M2": float(mean_row["M2"]),
-        "M4": float(mean_row["M4"]),
-        "Binder": float(mean_row["Binder"]),
-        "chi": float(mean_row["chi"]),
-        "Cv": float(mean_row["Cv"]),
-        "E": float(mean_row["E"]),
-        "E_exch": float(mean_row["E_exch"]),
-        "E_lsf": float(mean_row["E_lsf"]),
-    }
+    mean_columns = [column for column in CUMULANTS_COLUMNS if column != "iter"]
+    mean_row = slice_rows[mean_columns].mean()
+    return {column: float(mean_row[column]) for column in mean_columns}
 
 
 def _read_energy_mean(
@@ -149,34 +130,9 @@ def _read_energy_mean(
         raise ValueError(
             f'No data rows found in selected range for "{run_path}".'
         )
-    mean_row = slice_rows[
-        [
-            "tot",
-            "exch",
-            "aniso",
-            "DM",
-            "PD",
-            "BiqDM",
-            "BQ",
-            "dip",
-            "Zeeman",
-            "LSF",
-            "chir",
-        ]
-    ].mean()
-    return {
-        "tot": float(mean_row["tot"]),
-        "exch": float(mean_row["exch"]),
-        "aniso": float(mean_row["aniso"]),
-        "DM": float(mean_row["DM"]),
-        "PD": float(mean_row["PD"]),
-        "BiqDM": float(mean_row["BiqDM"]),
-        "BQ": float(mean_row["BQ"]),
-        "dip": float(mean_row["dip"]),
-        "Zeeman": float(mean_row["Zeeman"]),
-        "LSF": float(mean_row["LSF"]),
-        "chir": float(mean_row["chir"]),
-    }
+    mean_columns = [column for column in ENERGY_COLUMNS if column != "iter"]
+    mean_row = slice_rows[mean_columns].mean()
+    return {column: float(mean_row[column]) for column in mean_columns}
 
 
 def collect_averages(
@@ -204,22 +160,23 @@ def collect_averages(
 
     Returns:
         DataFrame containing one row per run directory. Columns include the
-        extracted template variables and the averaged values for 
+        extracted template variables and the averaged values for
         `Mx`, `My`, `Mz`, `M`, and `M_std`.
     """
     root_path = Path(root)
     name_pattern, fields = _compile_name_template(name_template)
-    columns = fields + ["Mx", "My", "Mz", "M", "M_std"]
+    mean_columns = [column for column in AVERAGES_COLUMNS if column != "iter"]
+    output_columns = [
+        "M_std" if column == "M_stdv" else column for column in mean_columns
+    ]
+    columns = fields + output_columns
     rows: list[dict[str, float | int | str]] = []
-    
-    # Find run directories matching the name pattern
     run_dirs = [
         entry
         for entry in root_path.iterdir()
         if entry.is_dir() and name_pattern.match(entry.name)
     ]
 
-    # Iterate over run directories and collect averages
     for entry in run_dirs:
         match = name_pattern.match(entry.name)
         if match is None:
@@ -243,11 +200,9 @@ def collect_averages(
                 raise
             logger.warning("Skipping run %s: %s", entry, exc)
 
-    # If no valid rows were collected, return an empty DataFrame
     if not rows:
         return pd.DataFrame(columns=columns)
 
-    # Create and return the final DataFrame
     frame = pd.DataFrame(rows, columns=columns)
     frame.sort_values(fields, inplace=True)
     frame.reset_index(drop=True, inplace=True)
@@ -280,22 +235,20 @@ def collect_cumulants(
 
     Returns:
         DataFrame containing one row per run directory. Columns include the
-        extracted template variables and the averaged values for 
+        extracted template variables and the averaged values for
         `M`, `M2`, `M4`, `Binder`, `chi`, `Cv`, `E`, `E_exch`, and `E_lsf`.
     """
     root_path = Path(root)
     name_pattern, fields = _compile_name_template(name_template)
-    columns = fields + ["M", "M2", "M4", "Binder", "chi", "Cv", "E", "E_exch", "E_lsf"]
+    mean_columns = [column for column in CUMULANTS_COLUMNS if column != "iter"]
+    columns = fields + mean_columns
     rows: list[dict[str, float | int | str]] = []
-    
-    # Find run directories matching the name pattern
     run_dirs = [
         entry
         for entry in root_path.iterdir()
         if entry.is_dir() and name_pattern.match(entry.name)
     ]
 
-    # Iterate over run directories and collect cumulants
     for entry in run_dirs:
         match = name_pattern.match(entry.name)
         if match is None:
@@ -319,11 +272,9 @@ def collect_cumulants(
                 raise
             logger.warning("Skipping run %s: %s", entry, exc)
 
-    # If no valid rows were collected, return an empty DataFrame
     if not rows:
         return pd.DataFrame(columns=columns)
 
-    # Create and return the final DataFrame
     frame = pd.DataFrame(rows, columns=columns)
     frame.sort_values(fields, inplace=True)
     frame.reset_index(drop=True, inplace=True)
@@ -355,34 +306,20 @@ def collect_energies(
 
     Returns:
         DataFrame containing one row per run directory. Columns include the
-        extracted template variables and the averaged values for 
+        extracted template variables and the averaged values for
         `tot`, `exch`, `aniso`, `DM`, `PD`, `BiqDM`, `BQ`, `dip`, `Zeeman`, `LSF`, and `chir`.
     """
     root_path = Path(root)
     name_pattern, fields = _compile_name_template(name_template)
-    columns = fields + [
-        "tot",
-        "exch",
-        "aniso",
-        "DM",
-        "PD",
-        "BiqDM",
-        "BQ",
-        "dip",
-        "Zeeman",
-        "LSF",
-        "chir",
-    ]
+    mean_columns = [column for column in ENERGY_COLUMNS if column != "iter"]
+    columns = fields + mean_columns
     rows: list[dict[str, float | int | str]] = []
-    
-    # Find run directories matching the name pattern
     run_dirs = [
         entry
         for entry in root_path.iterdir()
         if entry.is_dir() and name_pattern.match(entry.name)
     ]
 
-    # Iterate over run directories and collect energies
     for entry in run_dirs:
         match = name_pattern.match(entry.name)
         if match is None:
@@ -406,11 +343,9 @@ def collect_energies(
                 raise
             logger.warning("Skipping run %s: %s", entry, exc)
 
-    # If no valid rows were collected, return an empty DataFrame
     if not rows:
         return pd.DataFrame(columns=columns)
 
-    # Create and return the final DataFrame
     frame = pd.DataFrame(rows, columns=columns)
     frame.sort_values(fields, inplace=True)
     frame.reset_index(drop=True, inplace=True)
