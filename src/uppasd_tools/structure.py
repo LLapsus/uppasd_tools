@@ -1,5 +1,5 @@
 ##########################################################################################
-# analyze.py
+# structure.py
 #
 # Functions for analyzing UppASD output data.
 #
