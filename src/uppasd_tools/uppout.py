@@ -6,7 +6,7 @@
 ##########################################################################################
 
 import logging
-from typing import List
+from typing import List, SupportsInt, cast
 
 import pandas as pd
 from pathlib import Path
@@ -213,7 +213,8 @@ class UppOut:
             frame.columns = PROJAVGS_COLUMNS
             frames: dict[int, pd.DataFrame] = {}
             for proj, group in frame.groupby("proj"):
-                frames[int(proj)] = group.reset_index(drop=True)
+                proj_key = int(cast(SupportsInt, proj))
+                frames[proj_key] = group.reset_index(drop=True)
             return frames
         except Exception as exc:
             logger.error("Failed to read projavgs file %s: %s", path, exc)
@@ -262,7 +263,8 @@ class UppOut:
             frame.columns = PROJCUMULANTS_COLUMNS
             frames: dict[int, pd.DataFrame] = {}
             for proj, group in frame.groupby("proj"):
-                frames[int(proj)] = group.reset_index(drop=True)
+                proj_key = int(cast(SupportsInt, proj))
+                frames[proj_key] = group.reset_index(drop=True)
             return frames
         except Exception as exc:
             logger.error("Failed to read projcumulants file %s: %s", path, exc)
