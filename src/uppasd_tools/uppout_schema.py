@@ -48,4 +48,6 @@ ENERGY_COLUMNS = [
     "Zeeman",
     "LSF",
     "chir",
+    "ring",
+    "sa",
 ]
