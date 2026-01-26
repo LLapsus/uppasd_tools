@@ -99,10 +99,10 @@ def _visualize_supercell_df(
     if symbol_to_scale:
         for sym, sc in symbol_to_scale.items():
             # Preserve color if already set; py3Dmol overrides styles.
-            style = {"sphere": {"scale": float(sc)}}
+            sphere = {"scale": float(sc)}
             if symbol_to_color and sym in symbol_to_color:
-                style["sphere"]["color"] = symbol_to_color[sym]
-            view.setStyle({"elem": sym}, style)
+                sphere["color"] = symbol_to_color[sym]
+            view.setStyle({"elem": sym}, {"sphere": sphere})
 
     view.zoomTo()
     return view
