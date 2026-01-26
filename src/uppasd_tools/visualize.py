@@ -11,7 +11,7 @@ import py3Dmol
 
 ##########################################################################################
 
-def plot_coord(
+def visualize_supercell(
     uppout: UppOut,
     x="x", y="y", z="z",
     type_col="at_type",
