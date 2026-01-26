@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import re
+import sys
 from pathlib import Path
 
 import pandas as pd
@@ -23,6 +24,11 @@ from .uppout_schema import (
     PROJCUMULANTS_COLUMNS,
     PROJAVGS_COLUMNS,
 )
+
+try:
+    from tqdm.auto import tqdm
+except ImportError:  # pragma: no cover - optional dependency
+    tqdm = None
 
 ##########################################################################################
 
@@ -61,6 +67,33 @@ def _coerce_template_value(value: str) -> float | int | str:
     if FLOAT_RE.match(value):
         return float(value)
     return value
+
+
+def _iter_with_progress(iterable, enabled: bool, desc: str | None = None):
+    if enabled and tqdm is not None:
+        return tqdm(iterable, desc=desc)
+    if enabled:
+        return _simple_progress(iterable, desc=desc)
+    return iterable
+
+
+def _simple_progress(iterable, desc: str | None = None):
+    total = len(iterable) if hasattr(iterable, "__len__") else None
+    label = desc or "progress"
+
+    def _gen():
+        count = 0
+        for item in iterable:
+            count += 1
+            if total is None:
+                msg = f"{label}: {count}"
+            else:
+                msg = f"{label}: {count}/{total}"
+            print(f"\r{msg}", end="", file=sys.stderr)
+            yield item
+        print(file=sys.stderr)
+
+    return _gen()
 
 
 def _read_averages_mean(
@@ -231,6 +264,7 @@ def collect_averages(
     end: int | None = None,
     step: int | None = None,
     strict: bool = True,
+    progress: bool = True,
 ) -> pd.DataFrame:
     """
     Collect averaged output columns from run directories matching a name template.
@@ -245,6 +279,7 @@ def collect_averages(
         end: End index for row slicing (exclusive) before averaging.
         step: Step for row slicing before averaging.
         strict: When True, raise on any bad run; when False, skip with a warning.
+        progress: When True, show a progress bar during collection.
 
     Returns:
         DataFrame containing one row per run directory. Columns include the
@@ -265,7 +300,7 @@ def collect_averages(
         if entry.is_dir() and name_pattern.match(entry.name)
     ]
 
-    for entry in run_dirs:
+    for entry in _iter_with_progress(run_dirs, progress, desc="collect_averages"):
         match = name_pattern.match(entry.name)
         if match is None:
             continue
@@ -306,6 +341,7 @@ def collect_projavgs(
     end: int | None = None,
     step: int | None = None,
     strict: bool = True,
+    progress: bool = True,
 ) -> dict[int, pd.DataFrame]:
     """
     Collect averaged projavgs columns from run directories matching a name template.
@@ -320,6 +356,7 @@ def collect_projavgs(
         end: End index for row slicing (exclusive) before averaging.
         step: Step for row slicing before averaging.
         strict: When True, raise on any bad run; when False, skip with a warning.
+        progress: When True, show a progress bar during collection.
 
     Returns:
         Dictionary of DataFrames, one per projection index. Columns include the
@@ -344,7 +381,7 @@ def collect_projavgs(
         if entry.is_dir() and name_pattern.match(entry.name)
     ]
 
-    for entry in run_dirs:
+    for entry in _iter_with_progress(run_dirs, progress, desc="collect_projavgs"):
         match = name_pattern.match(entry.name)
         if match is None:
             continue
@@ -392,6 +429,7 @@ def collect_projcumulants(
     end: int | None = None,
     step: int | None = None,
     strict: bool = True,
+    progress: bool = True,
 ) -> dict[int, pd.DataFrame]:
     """
     Collect averaged projcumulants columns from run directories matching a name template.
@@ -406,6 +444,7 @@ def collect_projcumulants(
         end: End index for row slicing (exclusive) before averaging.
         step: Step for row slicing before averaging.
         strict: When True, raise on any bad run; when False, skip with a warning.
+        progress: When True, show a progress bar during collection.
 
     Returns:
         Dictionary of DataFrames, one per projection index. Columns include the
@@ -427,7 +466,7 @@ def collect_projcumulants(
         if entry.is_dir() and name_pattern.match(entry.name)
     ]
 
-    for entry in run_dirs:
+    for entry in _iter_with_progress(run_dirs, progress, desc="collect_projcumulants"):
         match = name_pattern.match(entry.name)
         if match is None:
             continue
@@ -475,6 +514,7 @@ def collect_cumulants(
     end: int | None = None,
     step: int | None = None,
     strict: bool = True,
+    progress: bool = True,
 ) -> pd.DataFrame:
     """
     Collect averaged cumulants columns from run directories matching a name template.
@@ -489,6 +529,7 @@ def collect_cumulants(
         end: End index for row slicing (exclusive) before averaging.
         step: Step for row slicing before averaging.
         strict: When True, raise on any bad run; when False, skip with a warning.
+        progress: When True, show a progress bar during collection.
 
     Returns:
         DataFrame containing one row per run directory. Columns include the
@@ -506,7 +547,7 @@ def collect_cumulants(
         if entry.is_dir() and name_pattern.match(entry.name)
     ]
 
-    for entry in run_dirs:
+    for entry in _iter_with_progress(run_dirs, progress, desc="collect_cumulants"):
         match = name_pattern.match(entry.name)
         if match is None:
             continue
@@ -546,6 +587,7 @@ def collect_energies(
     end: int | None = None,
     step: int | None = None,
     strict: bool = True,
+    progress: bool = True,
 ) -> pd.DataFrame:
     """
     Collect averaged energy columns from run directories matching a name template.
@@ -560,6 +602,7 @@ def collect_energies(
         end: End index for row slicing (exclusive) before averaging.
         step: Step for row slicing before averaging.
         strict: When True, raise on any bad run; when False, skip with a warning.
+        progress: When True, show a progress bar during collection.
 
     Returns:
         DataFrame containing one row per run directory. Columns include the
@@ -577,7 +620,7 @@ def collect_energies(
         if entry.is_dir() and name_pattern.match(entry.name)
     ]
 
-    for entry in run_dirs:
+    for entry in _iter_with_progress(run_dirs, progress, desc="collect_energies"):
         match = name_pattern.match(entry.name)
         if match is None:
             continue
