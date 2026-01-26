@@ -2,12 +2,14 @@
 Constants describing UppASD output file prefixes and column schemas.
 """
 
-AVERAGES_PREFIX = "averages"
-CUMULANTS_PREFIX = "cumulants"
-COORD_PREFIX = "coord"
-RESTART_PREFIX = "restart"
-STRUCT_PREFIX = "struct"
-ENERGY_PREFIX = "stdenergy"
+AVERAGES_PREFIX      = "averages"
+CUMULANTS_PREFIX     = "cumulants"
+COORD_PREFIX         = "coord"
+PROJCUMULANTS_PREFIX = "projcumulants"
+PROJAVGS_PREFIX      = "projavgs"
+RESTART_PREFIX       = "restart"
+STRUCT_PREFIX        = "struct"
+ENERGY_PREFIX        = "stdenergy"
 
 AVERAGES_COLUMNS = ["iter", "Mx", "My", "Mz", "M", "M_stdv"]
 CUMULANTS_COLUMNS = [
@@ -22,6 +24,8 @@ CUMULANTS_COLUMNS = [
     "E_exch",
     "E_lsf",
 ]
+PROJAVGS_COLUMNS = ["iter", "proj", "M", "M_stdv", "Mx", "My", "Mz"]
+PROJCUMULANTS_COLUMNS = ["iter", "proj", "M", "M2", "M4", "Binder", "chi"]
 COORD_COLUMNS = ["at_num", "x", "y", "z", "at_type", "at_num_cell"]
 RESTART_COLUMNS = ["ens_num", "at_num", "mom", "mx", "my", "mz"]
 STRUCT_COLUMNS = [

@@ -20,6 +20,10 @@ from .uppout_schema import (
     CUMULANTS_PREFIX,
     ENERGY_COLUMNS,
     ENERGY_PREFIX,
+    PROJCUMULANTS_COLUMNS,
+    PROJCUMULANTS_PREFIX,
+    PROJAVGS_COLUMNS,
+    PROJAVGS_PREFIX,
     RESTART_COLUMNS,
     RESTART_PREFIX,
     STRUCT_COLUMNS,
@@ -41,6 +45,8 @@ class UppOut:
     _prefix_cumulants = CUMULANTS_PREFIX
     _prefix_coord = COORD_PREFIX
     _prefix_energy = ENERGY_PREFIX
+    _prefix_projcumulants = PROJCUMULANTS_PREFIX
+    _prefix_projavgs = PROJAVGS_PREFIX
     _prefix_restart = RESTART_PREFIX
     _prefix_struct = STRUCT_PREFIX
 
@@ -174,13 +180,43 @@ class UppOut:
                 path,
                 sep=r"\s+",
                 engine="python",
-                header=0,
+                header=None,
+                skiprows=1,
                 skip_blank_lines=True,
             )
             frame.columns = AVERAGES_COLUMNS
             return frame
         except Exception as exc:
             logger.error("Failed to read averages file %s: %s", path, exc)
+            raise
+
+    def read_projavgs(self) -> dict[int, pd.DataFrame]:
+        """
+        Read an UppASD projavgs file into a dict of DataFrames keyed by projection index.
+        """
+
+        path = self._resolve_path(self._prefix_projavgs)
+        try:
+            frame = pd.read_csv(
+                path,
+                sep=r"\s+",
+                engine="python",
+                header=None,
+                comment="#",
+                skip_blank_lines=True,
+            )
+            if frame.shape[1] != len(PROJAVGS_COLUMNS):
+                raise ValueError(
+                    "Unexpected column count in projavgs file: "
+                    f"{frame.shape[1]} (expected {len(PROJAVGS_COLUMNS)})."
+                )
+            frame.columns = PROJAVGS_COLUMNS
+            frames: dict[int, pd.DataFrame] = {}
+            for proj, group in frame.groupby("proj"):
+                frames[int(proj)] = group.reset_index(drop=True)
+            return frames
+        except Exception as exc:
+            logger.error("Failed to read projavgs file %s: %s", path, exc)
             raise
 
     def read_cumulants(self) -> pd.DataFrame:
@@ -201,6 +237,35 @@ class UppOut:
             return frame
         except Exception as exc:
             logger.error("Failed to read cumulants file %s: %s", path, exc)
+            raise
+
+    def read_projcumulants(self) -> dict[int, pd.DataFrame]:
+        """
+        Read an UppASD projcumulants file into a dict of DataFrames keyed by projection index.
+        """
+
+        path = self._resolve_path(self._prefix_projcumulants)
+        try:
+            frame = pd.read_csv(
+                path,
+                sep=r"\s+",
+                engine="python",
+                header=None,
+                comment="#",
+                skip_blank_lines=True,
+            )
+            if frame.shape[1] != len(PROJCUMULANTS_COLUMNS):
+                raise ValueError(
+                    "Unexpected column count in projcumulants file: "
+                    f"{frame.shape[1]} (expected {len(PROJCUMULANTS_COLUMNS)})."
+                )
+            frame.columns = PROJCUMULANTS_COLUMNS
+            frames: dict[int, pd.DataFrame] = {}
+            for proj, group in frame.groupby("proj"):
+                frames[int(proj)] = group.reset_index(drop=True)
+            return frames
+        except Exception as exc:
+            logger.error("Failed to read projcumulants file %s: %s", path, exc)
             raise
 
     def read_energy(self) -> pd.DataFrame:
