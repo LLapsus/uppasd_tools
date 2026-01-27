@@ -9,7 +9,8 @@ PROJCUMULANTS_PREFIX = "projcumulants"
 PROJAVGS_PREFIX      = "projavgs"
 RESTART_PREFIX       = "restart"
 STRUCT_PREFIX        = "struct"
-ENERGY_PREFIX        = "stdenergy"
+ENERGY_PREFIX        = "totenergy"
+ENERGY_STD_PREFIX    = "stdenergy"
 
 AVERAGES_COLUMNS = ["iter", "Mx", "My", "Mz", "M", "M_stdv"]
 CUMULANTS_COLUMNS = [

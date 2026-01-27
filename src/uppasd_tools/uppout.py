@@ -20,6 +20,7 @@ from .uppout_schema import (
     CUMULANTS_PREFIX,
     ENERGY_COLUMNS,
     ENERGY_PREFIX,
+    ENERGY_STD_PREFIX,
     PROJCUMULANTS_COLUMNS,
     PROJCUMULANTS_PREFIX,
     PROJAVGS_COLUMNS,
@@ -45,6 +46,7 @@ class UppOut:
     _prefix_cumulants = CUMULANTS_PREFIX
     _prefix_coord = COORD_PREFIX
     _prefix_energy = ENERGY_PREFIX
+    _prefix_energy_std = ENERGY_STD_PREFIX
     _prefix_projcumulants = PROJCUMULANTS_PREFIX
     _prefix_projavgs = PROJAVGS_PREFIX
     _prefix_restart = RESTART_PREFIX
@@ -272,22 +274,40 @@ class UppOut:
 
     def read_energy(self) -> pd.DataFrame:
         """
-        Read an UppASD stdenergy file into a pandas DataFrame.
+        Read UppASD totenergy and stdenergy files into a pandas DataFrame.
         """
 
         path = self._resolve_path(self._prefix_energy)
+        std_path = self._resolve_path(self._prefix_energy_std)
         try:
-            frame = pd.read_csv(
+            energy_frame = pd.read_csv(
                 path,
                 sep=r"\s+",
                 engine="python",
                 header=0,
                 skip_blank_lines=True,
             )
-            frame.columns = ENERGY_COLUMNS
+            energy_frame.columns = ENERGY_COLUMNS
+            std_frame = pd.read_csv(
+                std_path,
+                sep=r"\s+",
+                engine="python",
+                header=0,
+                skip_blank_lines=True,
+            )
+            std_frame.columns = ENERGY_COLUMNS
+            std_columns = {
+                column: f"{column}_std"
+                for column in ENERGY_COLUMNS
+                if column != "iter"
+            }
+            std_frame = std_frame.rename(columns=std_columns)
+            frame = energy_frame.merge(std_frame, on="iter", how="inner")
             return frame
         except Exception as exc:
-            logger.error("Failed to read stdenergy file %s: %s", path, exc)
+            logger.error(
+                "Failed to read energy files %s and %s: %s", path, std_path, exc
+            )
             raise
 
     def read_coord(self) -> pd.DataFrame:
