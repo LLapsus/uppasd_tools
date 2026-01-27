@@ -9,5 +9,7 @@ dependencies:
   - jupyterlab
   - ipywidgets
   - py3Dmol
+  - pytest
+  - tqdm
   - ase
   - nglview
