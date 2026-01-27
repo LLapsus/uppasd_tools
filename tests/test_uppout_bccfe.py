@@ -75,7 +75,6 @@ def test_bccfe_read_energy(bccfe_uppout) -> None:
     expected_columns = ENERGY_COLUMNS + std_columns
     for column in expected_columns:
         assert column in frame.columns
-
     _assert_numeric_columns(frame, expected_columns)
 
 
