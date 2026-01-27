@@ -38,6 +38,9 @@ do_cumu Y
 cumu_step 20
 cumu_buff 10
 
+do_proj_avrg   Y                               Magnetizations of sublattices
+do_cumu_proj   Y
+
 plotenergy 1
 
 do_reduced Y
