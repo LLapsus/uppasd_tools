@@ -57,15 +57,15 @@ from uppasd_tools import UppOut
 upp = UppOut("/path/to/simulation/output/directory")
 
 # Access metadata
-print(upp.simid)
-print(upp.num_atoms, upp.num_atoms_cell, upp.num_atom_types, upp.num_ens)
+print(upp.summary())
 
-# Read output files
-df_avg     = upp.read_averages()
-df_coord   = upp.read_coord()
-df_restart = upp.read_restart()
-df_struct  = upp.read_struct()
-df_ener    = upp.read_energy()
+# Read output files as pandas DataFrames
+df_avg     = upp.read_averages()    # read averages.simid.out
+df_cumu    = upp.read_cumulants()   # read cumulants.simid.out
+df_coord   = upp.read_coord()       # read coord.simid.out
+df_restart = upp.read_restart()     # read restart.simid.out
+df_struct  = upp.read_struct()      # read struct.simid.out
+df_ener    = upp.read_energy()      # read totenergy.simid.out and stdenergy.simid.out
 
 # List of final configurations (per ensemble)
 final_configs = upp.final_configs()
@@ -74,13 +74,20 @@ final_configs = upp.final_configs()
 from uppasd_tools.structure import analyze_neighbors
 
 neighbors = analyze_neighbors(upp, at_num=1)
-```
 
-Notes:
-- Output files must follow the `prefix.simid.out` naming scheme and share a single `simid`.
-- If multiple different `simid` values are detected, `UppOut` raises an error.
-- You can pass `simid` to only index files with that identifier; it must be a string of exactly 8 characters.
-- When `simid` is provided and no matching files exist, `UppOut` raises an error.
+# 3D interactive visualizations
+from uppasd_tools.visualize import visualize_supercell, visualize_final_config
+
+visualize_supercell(upp)                   # visualize atomic structure   
+visualoze_final_config(upp, ens_index=2)   # visualize magnetic configuration
+
+# Collect data from different simulations to plot eg. temperature dependence
+from uppasd_tools.collect import collect_averages
+
+df_temp = collect_averages(
+  "/path/to/data/directory", name_template="SimResults_T{T}", simid="simid001"
+)
+```
 
 ## Tests
 
@@ -89,6 +96,11 @@ From the repository root:
 ```bash
 pytest
 ```
+
+## Examples
+
+- [examples/read_output_files.ipynb](examples/read_output_files.ipynb): Use UppOut object to inspect simulation metadata and read output files as pandas DataFrames.
+- [examples/analyze_structure.ipynb](examples/analyze_structure.ipynb): Analyze neighbor shells and exchange interactions from the struct file.
 
 ## Planned features
 
