@@ -132,6 +132,45 @@ class UppOut:
             df_restart = self.read_restart()
             self.num_ens = len(df_restart["ens_num"].unique())
 
+    def simdata(self) -> dict[str, object]:
+        """
+        Return simulation metadata as a dictionary.
+        """
+
+        return {
+            "dir_path": self.dir_path,
+            "prefixes": self.prefixes,
+            "simid": self.simid,
+            "num_atoms": self.num_atoms,
+            "num_atoms_cell": self.num_atoms_cell,
+            "num_atom_types": self.num_atom_types,
+            "num_ens": self.num_ens,
+            "xrange": self.xrange,
+            "yrange": self.yrange,
+            "zrange": self.zrange,
+        }
+
+    def summary(self) -> str:
+        """
+        Return a formatted summary string of simulation metadata.
+        """
+
+        data = self.simdata()
+        lines = [
+            f"Output directory: {data['dir_path']}",
+            f"Simulation ID: {data['simid']}",
+            f"Available output files: {data['prefixes']}",
+            "---",
+            f"Number of atoms in the unit cell: {data['num_atoms_cell']}",
+            f"Number of atom types: {data['num_atom_types']}",
+            f"Total number of atoms in the supercell: {data['num_atoms']}",
+            f"Number of ensembles in the simulation: {data['num_ens']}",
+            f"xrange: {data['xrange']}",
+            f"yrange: {data['yrange']}",
+            f"zrange: {data['zrange']}",
+        ]
+        return "\n".join(lines)
+
     def _index_output_files(self) -> None:
         for name in self.file_names:
             parts = name.split(".")
