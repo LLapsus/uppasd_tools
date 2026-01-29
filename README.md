@@ -100,7 +100,9 @@ pytest
 ## Examples
 
 - [examples/read_output_files.ipynb](examples/read_output_files.ipynb): Use UppOut object to inspect simulation metadata and read output files as pandas DataFrames.
+- [examples/visualize_structure.ipynb](examples/visualize_structure.ipynb): Visualize atomic structures and magnetic configurations using py3Dmol.
 - [examples/analyze_structure.ipynb](examples/analyze_structure.ipynb): Analyze neighbor shells and exchange interactions from the struct file.
+- [examples/collect_data.ipynb](examples/collect_data.ipynb): Collect and aggregate outputs across different simulations to obtain temperature dependence of desired quantities.
 
 ## Planned features
 
