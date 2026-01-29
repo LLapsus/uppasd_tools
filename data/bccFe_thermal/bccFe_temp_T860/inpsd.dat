@@ -1,0 +1,41 @@
+simid bccFe_T_                                    
+ncell     10        10        10                System size            
+BC        P         P         P                 Boundary conditions (0=vacuum, P=periodic)
+cell      1.00000   0.00000   0.00000         
+          0.00000   1.00000   0.00000
+          0.00000   0.00000   1.00000
+Sym       1                                     Symmetry of lattice (0 for no, 1 for cubic, 2 for 2d cubic, 3 for hexagonal)
+
+posfile   ./posfile
+momfile   ./momfile
+exchange  ./jfile
+
+do_prnstruct  0
+
+Initmag    1                                    Initial config of moments (1=random, 2=cone, 3=spec., 4=file)
+tseed      11336
+Mensemble  5
+
+ip_mode   M                                     Initial phase parameters
+ip_mcanneal 3
+1000 1500.0
+1000 1000.0
+3000 860
+
+mode      M                                     S=SD, M=MC
+temp      860
+MCNstep   2000 
+
+do_avrg   Y                                     Measure averages
+avrg_step 50
+
+do_cumu Y
+cumu_step 50
+cumu_buff 10
+
+do_tottraj N                                    Measure moments
+tottraj_step   1000
+
+plotenergy 1
+
+
