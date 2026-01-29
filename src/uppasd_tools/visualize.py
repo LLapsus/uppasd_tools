@@ -5,7 +5,10 @@
 #
 ##########################################################################################
 
+import asyncio
 import math
+import tempfile
+from pathlib import Path
 
 from .uppout import UppOut
 
@@ -41,8 +44,6 @@ def _filter_by_limits(
             m &= df[z] <= zmax
     return df[m]
 
-##########################################################################################
-
 
 def _visualize_supercell_df(
     df,
@@ -59,6 +60,7 @@ def _visualize_supercell_df(
     symbol_to_scale=None,
     show_sticks=False,
     stick_radius=0.08,
+    rotate=None,
 ):
     """
     Render atoms from a coordinate dataframe using py3Dmol.
@@ -105,6 +107,14 @@ def _visualize_supercell_df(
             view.setStyle({"elem": sym}, {"sphere": sphere})
 
     view.zoomTo()
+    if rotate is not None:
+        rx, ry, rz = rotate
+        if rx:
+            view.rotate(float(rx), "x")
+        if ry:
+            view.rotate(float(ry), "y")
+        if rz:
+            view.rotate(float(rz), "z")
     return view
 
 
@@ -126,6 +136,7 @@ def _visualize_config_df(
     mom_length=0.3,
     mom_radius=0.05,
     mom_color="gray",
+    rotate=None,
 ):
     """
     Render atoms and magnetic moments from a configuration dataframe using py3Dmol.
@@ -144,6 +155,7 @@ def _visualize_config_df(
         symbol_to_scale=symbol_to_scale,
         show_sticks=show_sticks,
         stick_radius=stick_radius,
+        rotate=rotate,
     )
 
     for _, r in df.iterrows():
@@ -169,6 +181,14 @@ def _visualize_config_df(
         )
 
     view.zoomTo()
+    if rotate is not None:
+        rx, ry, rz = rotate
+        if rx:
+            view.rotate(float(rx), "x")
+        if ry:
+            view.rotate(float(ry), "y")
+        if rz:
+            view.rotate(float(rz), "z")
     return view
 
 ##########################################################################################
@@ -188,6 +208,7 @@ def visualize_supercell(
     symbol_to_scale=None,
     show_sticks=False,
     stick_radius=0.08,
+    rotate=None,
 ):
     """
     Render atoms from UppOut coord data using py3Dmol.
@@ -205,6 +226,7 @@ def visualize_supercell(
         symbol_to_scale (dict): Optional mapping from symbol to scale.
         show_sticks (bool): Whether to show sticks between atoms.
         stick_radius (float): Radius of the sticks if shown.
+        rotate (tuple[float, float, float] | None): Rotation angles (deg) around x, y, z.
         
     Returns:
         py3Dmol.view: A py3Dmol view object with the rendered atoms.
@@ -227,6 +249,7 @@ def visualize_supercell(
         symbol_to_scale=symbol_to_scale,
         show_sticks=show_sticks,
         stick_radius=stick_radius,
+        rotate=rotate,
     )
 
 
@@ -249,6 +272,7 @@ def visualize_final_config(
     mom_length=0.3,
     mom_radius=0.05,
     mom_color="gray",
+    rotate=None,
 ):
     """
     Render atoms and magnetic moments from an UppOut final configuration using py3Dmol.
@@ -270,6 +294,7 @@ def visualize_final_config(
         mom_length (float): Arrow length for magnetic moments.
         mom_radius (float): Arrow radius for magnetic moments.
         mom_color (str): Arrow color for magnetic moments.
+        rotate (tuple[float, float, float] | None): Rotation angles (deg) around x, y, z.
         
     Returns:
         py3Dmol.view: A py3Dmol view object with the rendered atoms and moments.
@@ -305,4 +330,197 @@ def visualize_final_config(
         mom_length=mom_length,
         mom_radius=mom_radius,
         mom_color=mom_color,
+        rotate=rotate,
     )
+
+##########################################################################################
+
+def plot_supercell(
+    uppout: UppOut,
+    x="x", y="y", z="z",
+    type_col="at_type",
+    width=700, height=500,
+    scale=0.15,
+    rotation="0x,0y,0z",
+    xlim: tuple[float | None, float | None] | None = None,
+    ylim: tuple[float | None, float | None] | None = None,
+    zlim: tuple[float | None, float | None] | None = None,
+    type_to_symbol=None,
+    symbol_to_color=None,
+    symbol_to_scale=None,
+    show_axes=False,
+):
+    """
+    Render atoms from UppOut coord data using ASE (static matplotlib plot).
+
+    Returns:
+        tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]: Figure and axes.
+    """
+    # Validate input
+    if not isinstance(uppout, UppOut):
+        raise TypeError("uppout must be an UppOut instance.")
+
+    df = uppout.read_coord()
+    df = _filter_by_limits(df, x=x, y=y, z=z, xlim=xlim, ylim=ylim, zlim=zlim)
+    if df.empty:
+        raise ValueError("No atoms to plot after applying limits.")
+
+    try:
+        from ase.data import atomic_numbers, chemical_symbols
+    except ImportError as exc:
+        raise ImportError(
+            "ASE is required for plot_supercell(). Install with "
+            "'pip install ase'."
+        ) from exc
+
+    if type_to_symbol is None:
+        uniq = sorted(set(int(t) for t in df[type_col].values))
+        type_to_symbol = {
+            t: chemical_symbols[t] if 0 <= t < len(chemical_symbols) else "X"
+            for t in uniq
+        }
+
+    def _coerce_symbol(sym):
+        if isinstance(sym, int):
+            return chemical_symbols[sym] if 0 <= sym < len(chemical_symbols) else "X"
+        s = str(sym)
+        if s.isdigit():
+            idx = int(s)
+            return chemical_symbols[idx] if 0 <= idx < len(chemical_symbols) else "X"
+        return s if s in atomic_numbers else "X"
+
+    symbols = [
+        _coerce_symbol(type_to_symbol.get(int(t), "X"))
+        for t in df[type_col].values
+    ]
+    positions = df[[x, y, z]].to_numpy(dtype=float)
+
+    try:
+        from ase import Atoms
+        from ase.visualize.plot import plot_atoms
+    except ImportError as exc:
+        raise ImportError(
+            "ASE is required for plot_supercell(). Install with "
+            "'pip install ase'."
+        ) from exc
+
+    atoms = Atoms(symbols=symbols, positions=positions)
+
+    # Radii per atom
+    if symbol_to_scale is None:
+        radii = [float(scale)] * len(symbols)
+    else:
+        radii = [float(symbol_to_scale.get(sym, scale)) for sym in symbols]
+
+    # Matplotlib figure sizing: use pixels to inches at 100 dpi for a sane default.
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError as exc:
+        raise ImportError(
+            "matplotlib is required for plot_supercell(). Install with "
+            "'pip install matplotlib'."
+        ) from exc
+
+    fig = plt.figure(figsize=(width / 100, height / 100), dpi=100)
+    ax = fig.add_subplot(111)
+    plot_atoms(
+        atoms,
+        ax,
+        radii=radii,
+        rotation=rotation,
+        colors=symbol_to_color,
+    )
+    if not show_axes:
+        ax.set_axis_off()
+
+    return fig, ax
+
+
+##########################################################################################
+
+async def view_to_png_async(
+    view,
+    output_path: str | Path,
+    width: int = 700,
+    height: int = 500,
+    wait_ms: int = 1000,
+) -> Path:
+    """
+    Render a py3Dmol view to a PNG using Playwright (async).
+    """
+    try:
+        from playwright.async_api import async_playwright
+    except ImportError as exc:  # pragma: no cover - optional dependency
+        raise ImportError(
+            "Playwright is required to render PNGs. Install with "
+            "'pip install playwright' and 'playwright install chromium'."
+        ) from exc
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        html_path = Path(tmpdir) / "view.html"
+        view.write_html(str(html_path))
+
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page(
+                viewport={"width": int(width), "height": int(height)}
+            )
+            await page.goto(html_path.as_uri())
+            await page.wait_for_timeout(int(wait_ms))
+            await page.screenshot(path=str(output_path))
+            await browser.close()
+
+    return output_path
+
+
+def view_to_png(
+    view,
+    output_path: str | Path,
+    width: int = 700,
+    height: int = 500,
+    wait_ms: int = 1000,
+) -> Path:
+    """
+    Render a py3Dmol view to a PNG using Playwright.
+
+    Requires Playwright to be installed:
+      pip install playwright
+      playwright install chromium
+    """
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        pass
+    else:
+        raise RuntimeError(
+            "view_to_png() cannot run inside an active asyncio loop. "
+            "Use `await view_to_png_async(...)` instead."
+        )
+
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError as exc:  # pragma: no cover - optional dependency
+        raise ImportError(
+            "Playwright is required to render PNGs. Install with "
+            "'pip install playwright' and 'playwright install chromium'."
+        ) from exc
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        html_path = Path(tmpdir) / "view.html"
+        view.write_html(str(html_path))
+
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page(viewport={"width": int(width), "height": int(height)})
+            page.goto(html_path.as_uri())
+            page.wait_for_timeout(int(wait_ms))
+            page.screenshot(path=str(output_path))
+            browser.close()
+
+    return output_path
