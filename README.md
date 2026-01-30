@@ -84,6 +84,20 @@ df_temp = collect_averages(
 )
 ```
 
+## Dependencies
+
+Basic runtime dependencies (installed with the package):
+
+- pandas
+- numpy
+- py3Dmol
+
+Optional extras:
+
+- `viz`: playwright (PNG rendering)
+- `notebooks`: jupyterlab, matplotlib, ipywidgets
+- `dev`: pytest
+
 ## Tests
 
 From the repository root:
