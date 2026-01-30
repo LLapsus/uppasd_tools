@@ -17,10 +17,8 @@ tseed      SEED
 Mensemble  5
 
 ip_mode   M                                     Initial phase parameters
-ip_mcanneal 3
-1000 1500.0
-1000 1000.0
-3000 TEMP
+ip_mcanneal 1
+5000 TEMP
 
 mode      M                                     S=SD, M=MC
 temp      TEMP
@@ -36,6 +34,6 @@ cumu_buff 10
 do_tottraj N                                    Measure moments
 tottraj_step   1000
 
-plotenergy 1
+plotenergy 0
 
 

@@ -5,8 +5,10 @@ Input and output files for each simulation are stored in a separate folder. The 
 
 The simulations have been run using the bash script `submit_all.sh`.
 
+Some of the output files were deleted to reduce the size of the data.
+
 ## Monte Carlo simulations
 
 Each simulation consists of
-- initial phase: thermalization (3000 MC steps at temperature T)
+- initial phase: thermalization (5000 MC steps at temperature T)
 - main phase: 2000 MC steps at temperature T

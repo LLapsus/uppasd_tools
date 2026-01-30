@@ -6,7 +6,8 @@
 
 #PBS -N bcc_Fe
 #PBS -l select=1:ncpus=16:mem=4gb:scratch_local=16gb
-#PBS -l walltime=12:00:00
+#PBS -l walltime=1:00:00
+#PBS -q luna
 #PBS -j oe
 
 # set number of threads

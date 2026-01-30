@@ -13,14 +13,12 @@ exchange  ./jfile
 do_prnstruct  0
 
 Initmag    1                                    Initial config of moments (1=random, 2=cone, 3=spec., 4=file)
-tseed      2710
+tseed      29599
 Mensemble  5
 
 ip_mode   M                                     Initial phase parameters
-ip_mcanneal 3
-1000 1500.0
-1000 1000.0
-3000 640
+ip_mcanneal 1
+5000 640
 
 mode      M                                     S=SD, M=MC
 temp      640
@@ -36,6 +34,6 @@ cumu_buff 10
 do_tottraj N                                    Measure moments
 tottraj_step   1000
 
-plotenergy 1
+plotenergy 0
 
 
