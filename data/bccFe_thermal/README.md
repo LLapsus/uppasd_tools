@@ -5,10 +5,12 @@ Input and output files for each simulation are stored in a separate folder. The 
 
 The simulations have been run using the bash script `submit_all.sh`.
 
-Some of the output files were deleted to reduce the size of the data.
+Some of the UppASD output files were removed in order to reduce the size of the data directory.
 
 ## Monte Carlo simulations
 
+We simulated 3D superlattice of size: 10 x 10 x 10 with periodic boundary conditions.
+
 Each simulation consists of
-- initial phase: thermalization (5000 MC steps at temperature T)
-- main phase: 2000 MC steps at temperature T
+- initial phase: thermalization (10^5 MC steps at temperature T)
+- main phase: 4 x 10^4 MC steps at temperature T

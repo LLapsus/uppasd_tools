@@ -18,11 +18,11 @@ Mensemble  5
 
 ip_mode   M                                     Initial phase parameters
 ip_mcanneal 1
-5000 TEMP
+100000 TEMP
 
 mode      M                                     S=SD, M=MC
 temp      TEMP
-MCNstep   2000 
+MCNstep   40000 
 
 do_avrg   Y                                     Measure averages
 avrg_step 50
@@ -32,8 +32,7 @@ cumu_step 50
 cumu_buff 10
 
 do_tottraj N                                    Measure moments
-tottraj_step   1000
 
-plotenergy 0
+plotenergy 1
 
 
