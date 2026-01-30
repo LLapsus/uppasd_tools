@@ -1,24 +1,19 @@
 # UppASD Tools
 
-**UppASD Tools** is a Python package for reading, validating, and post-processing output files
-produced by atomistic spin dynamics or Monte Carlo simulations performed with
-[UppASD](https://github.com/UppASD/UppASD) (Uppsala Atomistic Spin Dynamics).
+**UppASD Tools** is intended for researchers using the [UppASD](https://github.com/UppASD/UppASD)
+package to streamline post-processing and analysis of simulation outputs.
 
-The package focuses on robust parsing of common UppASD output formats as **pandas DataFrames**,
-enabling direct use of the results with standard Python tools for data analysis and
-visualization. This design choice simplifies aggregation of data across multiple
-simulations and provides a natural foundation for future extensions towards
-more advanced data analysis workflows.
+The package focuses on robust parsing of common UppASD output formats into pandas DataFrames,
+enabling direct use of the results with standard Python tools for data analysis and visualization.
 
-UppASD Tools is intended to simplify exploratory analysis, regression testing of
-simulation setups, and the development of reproducible post-processing workflows
-in Python.
+The goal of UppASD Tools is to simplify exploratory analysis, regression testing of simulation setups,
+and the development of reproducible post-processing workflows in Python.
 
 ## Features
 
 - Reading and parsing of common UppASD output files, including atomic positions,
   magnetic moments, neighbor structures, and simulation results
-- Analysis of atomic pairs used to calculate exchange interactions
+- Analysis of atomic pairs used for the calculation of exchange interactions
 - Interactive 3D visualization of atomic structures and magnetic configurations
   using **py3Dmol**
 - Collection and aggregation of data from multiple simulations to construct

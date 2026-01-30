@@ -13,10 +13,15 @@ authors = [{name = "UppASD Tools"}]
 
 dependencies = [
   "pandas>=1.5",
+  "numpy",
+  "py3Dmol",
 ]
 
 [project.optional-dependencies]
-all = ["pytest>=7.0"]
+dev = ["pytest>=7.0"]
+viz = ["playwright"]
+notebooks = ["jupyterlab", "matplotlib", "ipywidgets"]
+all = ["pytest>=7.0", "playwright", "jupyterlab", "matplotlib", "ipywidgets"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
