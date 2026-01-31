@@ -6,6 +6,11 @@
 UppASD Tools documentation
 ==========================
 
+UppASD Tools is intended for researchers using the UppASD (Uppsala Atomistic Spin Dynamics) package 
+to streamline post-processing and analysis of simulation outputs.
+The package focuses on robust parsing of common UppASD output formats into pandas DataFrames, 
+enabling direct use of the results with standard Python tools for data analysis and visualization.
+
 .. toctree::
    :maxdepth: 2
 
