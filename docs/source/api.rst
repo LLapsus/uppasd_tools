@@ -22,7 +22,6 @@ uppasd_tools.visualize
 .. automodule:: uppasd_tools.visualize
    :members:
    :undoc-members:
-   :exclude-members: plot_supercell,
 
 uppasd_tools.collect
 ----------------------
