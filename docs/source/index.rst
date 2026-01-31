@@ -14,5 +14,6 @@ UppASD Tools documentation
    structure
    visualize
    collect
+   examples
 
 
