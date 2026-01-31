@@ -3,8 +3,6 @@
 **UppASD Tools** is intended for researchers using the [UppASD](https://github.com/UppASD/UppASD)
 package to streamline post-processing and analysis of simulation outputs.
 
-📘 **Documentation:** https://llapsus.github.io/uppasd_tools/
-
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://llapsus.github.io/uppasd_tools/)
 
 
