@@ -1,6 +1,3 @@
-API
-===
-
 uppasd_tools.uppout
 -------------------
 
