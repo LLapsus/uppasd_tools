@@ -16,3 +16,9 @@ For development or local modifications, clone the repository and install in edit
    git clone https://github.com/LLapsus/uppasd_tools.git
    cd uppasd_tools
    pip install -e .
+
+Optional dependencies
+---------------------
+
+Some features require additional dependencies (``pandas``, ``numpy``, and ``py3Dmol``),
+which can be installed manually if needed.
