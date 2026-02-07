@@ -25,6 +25,9 @@ You can correct it by specifying given `SIMID`.
 
 Once you initialized `UppOut` object, you can rewiev the information gathered by the uppout object.
 
+Summarize UppASD directory
+--------------------------
+
 .. code-block:: Python
 
     uppout.summary()
@@ -43,6 +46,9 @@ Once you initialized `UppOut` object, you can rewiev the information gathered by
     yrange: (0.0, 5.5)
     zrange: (0.0, 5.5)
 
+Read UppASD output files
+------------------------
+
 UppOut holds simulation ID in `uppout.simid` and prefixes of all available output files in `uppout.prefixes`.
 To read an output file you can use any of the function listed 
 in :doc:`uppasd_tools.uppout reference <uppout>`.
@@ -52,7 +58,7 @@ For instance to read the `averages.simid001.out` file use
 
     df_averages = uppout.read_averages()
 
-which returns a pandas dataframe containing the data from the file.
+which returns a pandas dataframe containing the data from the file
 
 +------+--------+--------+--------+--------+----------+
 | iter | Mx     | My     | Mz     | M      | M_stdv   |
