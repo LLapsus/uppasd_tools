@@ -120,3 +120,55 @@ Analogically, one can visualize static magnetic configurations.
 To learn more about visualization in uppasd_tools visit :doc:`uppasd_tools.visualize <visualize>` section 
 or review the
 `example Jupyter notebook <https://github.com/LLapsus/uppasd_tools/blob/78e493ae3d7236fcbab24c5b8ed11649b91f53fa/examples/visualize_structure.ipynb>`_.
+
+Collect data
+------------
+
+A typical use case of UppASD is the estimation of the Curie temperature using
+Monte Carlo simulations. In practice, one performs a series of simulations at
+different temperatures in order to obtain the temperature dependence of
+magnetization, specific heat, and the Binder cumulant.
+
+If each simulation is stored in a separate directory, ``uppasd_tools.collect``
+can be used to read the outputs of multiple simulations and merge them into a
+single temperature-dependent dataset.
+
+For Curie temperature estimation one typically runs multiple Monte Carlo simulations
+at different temperatures. A convenient way to organize such a sweep is to keep
+all simulations under a single root directory, with one subdirectory per temperature.
+
+A recommended directory layout is:
+
+.. code-block:: text
+
+   temp_root/
+   ├── sim_T100K/
+   │   ├── inpsd.dat
+   │   ├── posfile
+   │   ├── momfile
+   │   ├── averages.simid001.out
+   │   ├── cumulants.simid001.out
+   │   ├── stdenergy.simid001.out
+   │   └── restart.simid001.out
+   ├── sim_T90K/
+   │   ├── inpsd.dat
+   │   ├── posfile
+   │   ├── momfile
+   │   └── ...
+   └── sim_T80K/
+       └── ...
+
+The directory name (e.g. ``sim_T50K``) can be treated as a template and used to
+associate each simulation with its temperature value. The function
+``uppasd_tools.collect_averages`` iterates over all simulation directories, reads selected
+output files, and merges the results into a single temperature-dependent dataset.
+
+.. code-block:: Python
+
+    from uppasd_tools.collect import collect_averages
+
+    # Collect data from averages.simid.out files
+    df_aver = collect_averages('./temp_root', name_template='sim_T{T}', simid='simid001')
+ 
+Analogically one can use other functions listed in :doc:`uppasd_tools.collect <collect>`.
+An example of usage you can find in `example Jupyter notebook <https://github.com/LLapsus/uppasd_tools/blob/78e493ae3d7236fcbab24c5b8ed11649b91f53fa/examples/collect_data.ipynb>`_.
