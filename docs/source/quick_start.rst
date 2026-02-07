@@ -14,7 +14,16 @@ and extracts available parameters.
 
     uppout = UppOut('/path/to/UppASD/directory')
 
-You can rewiev the information gathered by the uppout object.
+It is important, that all the output files share the same `SIMID`, which means they were produced by the same simulation.
+In case, you have stored outputs of multiple simulations in the same directory, UppOut will raise and error. 
+You can correct it by specifying given `SIMID`.
+
+.. code-block:: Python
+
+    uppout = UppOut('/path/to/UppASD/directory', simid='simid001')
+
+
+Once you initialized `UppOut` object, you can rewiev the information gathered by the uppout object.
 
 .. code-block:: Python
 
@@ -22,8 +31,8 @@ You can rewiev the information gathered by the uppout object.
 
 .. code-block:: text
 
-    Output directory: ../data/bccFe
-    Simulation ID: bcc_Fe_T
+    Output directory: /path/to/UppASD/directory
+    Simulation ID: simid001
     Available output files: ['averages', 'coord', 'cumulants', 'mcinitial', 'restart', 'stdenergy', 'struct', 'totenergy']
     ---
     Number of atoms in the unit cell: 2
@@ -34,10 +43,15 @@ You can rewiev the information gathered by the uppout object.
     yrange: (0.0, 5.5)
     zrange: (0.0, 5.5)
 
-It is important, that all the output files share the same `SIMID`, which means they were produced by the same simulation.
-In case, you have stored outputs of multiple simulations in the same directory, UppOut will raise and error. 
-You can correct it by specifying given `SIMID`.
+UppOut holds simulation ID in `uppout.simid` and prefixes of all available output files in `uppout.prefixes`.
+To read an output file you can use any of the function listed in :doc: `uppout`. 
+For instance to read the `averages.simid001.out` file use
 
 .. code-block:: Python
 
-    uppout = UppOut('/path/to/UppASD/directory', simid='bcc_Fe_T')
+    df_averages = uppout.read_averages()
+
+which returns a pandas dataframe containing the data from the file.
+
+For more information see the 
+`example Python notebook. <https://github.com/LLapsus/uppasd_tools/blob/78e493ae3d7236fcbab24c5b8ed11649b91f53fa/examples/read_output_files.ipynb>`_
