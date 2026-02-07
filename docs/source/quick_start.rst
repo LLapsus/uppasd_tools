@@ -1,3 +1,4 @@
+===========
 Quick start
 ===========
 
@@ -25,7 +26,8 @@ You can correct it by specifying given `SIMID`.
 
 Once you initialized `UppOut` object, you can rewiev the information gathered by the uppout object.
 
-:fieldname: Summarize UppASD directory
+Summarize UppASD directory
+--------------------------
 
 .. code-block:: Python
 
