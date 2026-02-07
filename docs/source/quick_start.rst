@@ -56,7 +56,7 @@ Read UppASD output files
 
 UppOut holds simulation ID in ``uppout.simid`` and prefixes of all available output files in ``uppout.prefixes``.
 To read an output file you can use any of the function listed 
-in :doc:`uppasd_tools.uppout reference <uppout>`.
+in :doc:`uppasd_tools.uppout reference <api/uppout>`.
 
 For instance to read the ``averages.simid001.out`` file use
 
@@ -117,7 +117,7 @@ of the atomic structure.
 
 Analogically, one can visualize static magnetic configurations.
 
-To learn more about visualization in uppasd_tools visit :doc:`uppasd_tools.visualize <visualize>` section 
+To learn more about visualization in uppasd_tools visit :doc:`uppasd_tools.visualize <api/visualize>` section 
 or review the
 `example Jupyter notebook <https://github.com/LLapsus/uppasd_tools/blob/78e493ae3d7236fcbab24c5b8ed11649b91f53fa/examples/visualize_structure.ipynb>`_.
 
@@ -198,5 +198,5 @@ One can simply plot the resulting dependence.
    :align: center
    :alt: Temperature dependence of magnetization
 
-Analogically one can use other functions listed in :doc:`uppasd_tools.collect <collect>`.
+Analogically one can use other functions listed in :doc:`uppasd_tools.collect <api/collect>`.
 An example of usage you can find in `example Jupyter notebook <https://github.com/LLapsus/uppasd_tools/blob/78e493ae3d7236fcbab24c5b8ed11649b91f53fa/examples/collect_data.ipynb>`_.
