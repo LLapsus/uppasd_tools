@@ -44,7 +44,8 @@ Once you initialized `UppOut` object, you can rewiev the information gathered by
     zrange: (0.0, 5.5)
 
 UppOut holds simulation ID in `uppout.simid` and prefixes of all available output files in `uppout.prefixes`.
-To read an output file you can use any of the function listed in :doc: `uppasd_tools.uppout reference <uppout>`. 
+To read an output file you can use any of the function listed 
+in :doc:`uppasd_tools.uppout reference <uppout>`. 
 For instance to read the `averages.simid001.out` file use
 
 .. code-block:: Python
