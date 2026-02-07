@@ -19,10 +19,7 @@ enabling direct use of the results with standard Python tools for data analysis 
 
    installation
    quick_start
-   uppout
-   structure
-   visualize
-   collect
+   api
    examples
 
 
