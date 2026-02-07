@@ -3,7 +3,7 @@ Introduction
 ============
 
 **UppASD Tools** is intended for researchers using the 
-`UppASD (Uppsala Atomistic Spin Dynamics) package <https://github.com/UppASD/UppASD>`_
+`UppASD (Uppsala Atomistic Spin Dynamics) <https://github.com/UppASD/UppASD>`_
 package to streamline post-processing and analysis of simulation outputs.
 
 The package focuses on robust parsing of common UppASD output formats into
