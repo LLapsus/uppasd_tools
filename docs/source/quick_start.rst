@@ -25,8 +25,7 @@ You can correct it by specifying given `SIMID`.
 
 Once you initialized `UppOut` object, you can rewiev the information gathered by the uppout object.
 
-Summarize UppASD directory
---------------------------
+:fieldname: Summarize UppASD directory
 
 .. code-block:: Python
 
@@ -63,6 +62,8 @@ which returns a pandas dataframe containing the data from the file
 +------+--------+--------+--------+--------+----------+
 | iter | Mx     | My     | Mz     | M      | M_stdv   |
 +======+========+========+========+========+==========+
+| ...  | ...    | ...    | ...    | ...    | ...      |
++------+--------+--------+--------+--------+----------+
 
 For more information see the 
 `example Python notebook. <https://github.com/LLapsus/uppasd_tools/blob/78e493ae3d7236fcbab24c5b8ed11649b91f53fa/examples/read_output_files.ipynb>`_
