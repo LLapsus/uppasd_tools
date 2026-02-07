@@ -17,6 +17,7 @@ enabling direct use of the results with standard Python tools for data analysis 
    :maxdepth: 2
 
    installation
+   quick_start
    uppout
    structure
    visualize
