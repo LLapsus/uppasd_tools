@@ -86,7 +86,7 @@ This will return list of pandas DataFrames.
 Each DataFrame contains magnetic configuration for one of the simulated member of the ensemble.
 
 For more advanced usage examples, see the 
-`example Jupyter notebook. <https://github.com/LLapsus/uppasd_tools/blob/78e493ae3d7236fcbab24c5b8ed11649b91f53fa/examples/read_output_files.ipynb>`_.
+`example Jupyter notebook <https://github.com/LLapsus/uppasd_tools/blob/78e493ae3d7236fcbab24c5b8ed11649b91f53fa/examples/read_output_files.ipynb>`_.
 
 Visualization
 -------------
