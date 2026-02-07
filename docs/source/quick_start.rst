@@ -172,5 +172,31 @@ output files, and merges the results into a single temperature-dependent dataset
     # Collect data from averages.simid.out files
     df_aver = collect_averages('./temp_root', name_template='sim_T{T}', simid='simid001')
  
+``df_aver`` is a dataframe of the structure
+
++-------+--------+--------+--------+--------+--------+
+| T     | Mx     | My     | Mz     | M      | M_std  |
++=======+========+========+========+========+========+
+| 100   | ...    | ...    | ...    | ...    | ...    |
++-------+--------+--------+--------+--------+--------+
+| 90    | ...    | ...    | ...    | ...    | ...    |
++-------+--------+--------+--------+--------+--------+
+| 80    | ...    | ...    | ...    | ...    | ...    |
++-------+--------+--------+--------+--------+--------+
+
+The table summarizes the temperature dependence of the averaged magnetization
+components and their standard deviation obtained from Monte Carlo simulations.
+
+One can simply plot the resulting dependence.
+
+.. code-block:: Python
+
+    df_aver.plot(x="T", y="M", marker="o")
+
+.. image:: _static/images/magnetization_temp.png
+   :width: 600px
+   :align: center
+   :alt: Temperature dependence of magnetization
+
 Analogically one can use other functions listed in :doc:`uppasd_tools.collect <collect>`.
 An example of usage you can find in `example Jupyter notebook <https://github.com/LLapsus/uppasd_tools/blob/78e493ae3d7236fcbab24c5b8ed11649b91f53fa/examples/collect_data.ipynb>`_.
