@@ -64,7 +64,7 @@ For instance to read the `averages.simid001.out` file use
 
     df_averages = uppout.read_averages()
 
-which returns a pandas dataframe containing the data from the file
+which returns a pandas DataFrame instance containing the data from the file
 
 +------+--------+--------+--------+--------+----------+
 | iter | Mx     | My     | Mz     | M      | M_stdv   |
