@@ -1,11 +1,14 @@
 ===========
-Quick start
+Quick Start
 ===========
 
-**Uppasd_tools** is designed to process UppASD simulation output. The output files of UppASD simulations are named as
-`prefix.SIMID.out`, where `SIMID` is simulation id, 8-character string set in the UppASD main input file, `inpsd.dat`.
+**Uppasd_tools** is designed to process UppASD simulation output and provide
+a convenient Python interface for inspecting, summarizing, and post-processing
+simulation results.
 
-In the ideal case, all results of your simulation are stored in one directory. 
+The output files of UppASD simulations are named as
+`prefix.SIMID.out`, where `SIMID` is simulation id, 8-character string set in the UppASD main input file, `inpsd.dat`.
+Ideally, all results of your simulation are stored in one directory. 
 To process these files, initialize UppOut object, which checks the directory, finds available output files, 
 and extracts available parameters.
 
@@ -23,11 +26,12 @@ You can correct it by specifying given `SIMID`.
 
     uppout = UppOut('/path/to/UppASD/directory', simid='simid001')
 
-
-Once you initialized `UppOut` object, you can review the information gathered in the uppout instance.
-
 Summarize UppASD directory
 --------------------------
+
+Once you initialized `UppOut` object, you can review the information gathered in the uppout instance.
+This provides a quick overview of the simulation setup and available data,
+which is often the first thing to check before any analysis.
 
 .. code-block:: Python
 
@@ -68,6 +72,10 @@ which returns a pandas dataframe containing the data from the file
 | ...  | ...    | ...    | ...    | ...    | ...      |
 +------+--------+--------+--------+--------+----------+
 
+The table contains averaged magnetization components and their standard deviation
+as a function of Monte Carlo iteration.
+More details on UppASD output files you can find in the `UppASD Manual <https://uppasd.github.io/UppASD-manual/output/>`_.
+
 If you need to see final magnetic configurations, stored in `restart.simid001.out` file, use
 
 .. code-block:: Python
@@ -77,6 +85,6 @@ If you need to see final magnetic configurations, stored in `restart.simid001.ou
 This will return list of pandas DataFrames. 
 Each DataFrame contains magnetic configuration for one of the simulated member of the ensemble.
 
-For more information see the 
+For more advanced usage examples, see the 
 `example Python notebook. <https://github.com/LLapsus/uppasd_tools/blob/78e493ae3d7236fcbab24c5b8ed11649b91f53fa/examples/read_output_files.ipynb>`_
 
