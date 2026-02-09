@@ -41,6 +41,38 @@ FLOAT_RE = re.compile(r"^-?(?:\d+\.\d*|\d*\.\d+|\d+)(?:[eE][+-]?\d+)?$")
 
 ##########################################################################################
 
+def _ensure_root_dir(root: str | Path) -> Path:
+    root_path = Path(root)
+    if not root_path.exists():
+        msg = f'Root path "{root_path}" does not exist.'
+        logger.error(msg)
+        raise FileNotFoundError(msg)
+    if not root_path.is_dir():
+        msg = f'Root path "{root_path}" is not a directory.'
+        logger.error(msg)
+        raise NotADirectoryError(msg)
+    return root_path
+
+
+def _find_run_dirs(
+    root_path: Path,
+    name_pattern: re.Pattern[str],
+    name_template: str,
+) -> list[Path]:
+    run_dirs = [
+        entry
+        for entry in root_path.iterdir()
+        if entry.is_dir() and name_pattern.match(entry.name)
+    ]
+    if not run_dirs:
+        msg = (
+            f'No subdirectories in "{root_path}" match template "{name_template}".'
+        )
+        logger.error(msg)
+        raise ValueError(msg)
+    return run_dirs
+
+
 def _compile_name_template(template: str) -> tuple[re.Pattern[str], list[str]]:
     fields = [match.group(1) for match in TEMPLATE_FIELD_RE.finditer(template)]
     if not fields:
@@ -255,6 +287,7 @@ def _read_energy_mean(
     mean_row = slice_rows[mean_columns].mean()
     return {column: float(mean_row[column]) for column in mean_columns}
 
+##########################################################################################
 
 def collect_averages(
     root: str | Path,
@@ -286,7 +319,7 @@ def collect_averages(
         extracted template variables and the averaged values for
         `Mx`, `My`, `Mz`, `M`, and `M_std`.
     """
-    root_path = Path(root)
+    root_path = _ensure_root_dir(root)
     name_pattern, fields = _compile_name_template(name_template)
     mean_columns = [column for column in AVERAGES_COLUMNS if column != "iter"]
     output_columns = [
@@ -294,11 +327,7 @@ def collect_averages(
     ]
     columns = fields + output_columns
     rows: list[dict[str, float | int | str]] = []
-    run_dirs = [
-        entry
-        for entry in root_path.iterdir()
-        if entry.is_dir() and name_pattern.match(entry.name)
-    ]
+    run_dirs = _find_run_dirs(root_path, name_pattern, name_template)
 
     for entry in _iter_with_progress(run_dirs, progress, desc="collect_averages"):
         match = name_pattern.match(entry.name)
@@ -363,7 +392,7 @@ def collect_projavgs(
         extracted template variables and the averaged values for
         `M`, `M_std`, `Mx`, `My`, and `Mz`.
     """
-    root_path = Path(root)
+    root_path = _ensure_root_dir(root)
     name_pattern, fields = _compile_name_template(name_template)
     mean_columns = [
         column
@@ -375,11 +404,7 @@ def collect_projavgs(
     ]
     columns = fields + output_columns
     rows_by_proj: dict[int, list[dict[str, float | int | str]]] = {}
-    run_dirs = [
-        entry
-        for entry in root_path.iterdir()
-        if entry.is_dir() and name_pattern.match(entry.name)
-    ]
+    run_dirs = _find_run_dirs(root_path, name_pattern, name_template)
 
     for entry in _iter_with_progress(run_dirs, progress, desc="collect_projavgs"):
         match = name_pattern.match(entry.name)
@@ -451,7 +476,7 @@ def collect_projcumulants(
         extracted template variables and the averaged values for
         `M`, `M2`, `M4`, `Binder`, and `chi`.
     """
-    root_path = Path(root)
+    root_path = _ensure_root_dir(root)
     name_pattern, fields = _compile_name_template(name_template)
     mean_columns = [
         column
@@ -460,11 +485,7 @@ def collect_projcumulants(
     ]
     columns = fields + mean_columns
     rows_by_proj: dict[int, list[dict[str, float | int | str]]] = {}
-    run_dirs = [
-        entry
-        for entry in root_path.iterdir()
-        if entry.is_dir() and name_pattern.match(entry.name)
-    ]
+    run_dirs = _find_run_dirs(root_path, name_pattern, name_template)
 
     for entry in _iter_with_progress(run_dirs, progress, desc="collect_projcumulants"):
         match = name_pattern.match(entry.name)
@@ -536,16 +557,12 @@ def collect_cumulants(
         extracted template variables and the averaged values for
         `M`, `M2`, `M4`, `Binder`, `chi`, `Cv`, `E`, `E_exch`, and `E_lsf`.
     """
-    root_path = Path(root)
+    root_path = _ensure_root_dir(root)
     name_pattern, fields = _compile_name_template(name_template)
     mean_columns = [column for column in CUMULANTS_COLUMNS if column != "iter"]
     columns = fields + mean_columns
     rows: list[dict[str, float | int | str]] = []
-    run_dirs = [
-        entry
-        for entry in root_path.iterdir()
-        if entry.is_dir() and name_pattern.match(entry.name)
-    ]
+    run_dirs = _find_run_dirs(root_path, name_pattern, name_template)
 
     for entry in _iter_with_progress(run_dirs, progress, desc="collect_cumulants"):
         match = name_pattern.match(entry.name)
@@ -609,16 +626,12 @@ def collect_energies(
         extracted template variables and the averaged values for
         `tot`, `exch`, `aniso`, `DM`, `PD`, `BiqDM`, `BQ`, `dip`, `Zeeman`, `LSF`, and `chir`.
     """
-    root_path = Path(root)
+    root_path = _ensure_root_dir(root)
     name_pattern, fields = _compile_name_template(name_template)
     mean_columns = [column for column in ENERGY_COLUMNS if column != "iter"]
     columns = fields + mean_columns
     rows: list[dict[str, float | int | str]] = []
-    run_dirs = [
-        entry
-        for entry in root_path.iterdir()
-        if entry.is_dir() and name_pattern.match(entry.name)
-    ]
+    run_dirs = _find_run_dirs(root_path, name_pattern, name_template)
 
     for entry in _iter_with_progress(run_dirs, progress, desc="collect_energies"):
         match = name_pattern.match(entry.name)
