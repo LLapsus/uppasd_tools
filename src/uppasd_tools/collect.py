@@ -73,6 +73,10 @@ def _find_run_dirs(
     return run_dirs
 
 
+def _log_missing_output(entry: Path, exc: FileNotFoundError) -> None:
+    logger.error("Missing output file for run %s: %s", entry, exc)
+
+
 def _compile_name_template(template: str) -> tuple[re.Pattern[str], list[str]]:
     fields = [match.group(1) for match in TEMPLATE_FIELD_RE.finditer(template)]
     if not fields:
@@ -312,6 +316,7 @@ def collect_averages(
         end: End index for row slicing (exclusive) before averaging.
         step: Step for row slicing before averaging.
         strict: When True, raise on any bad run; when False, skip with a warning.
+            Missing output files are always skipped with an error log.
         progress: When True, show a progress bar during collection.
 
     Returns:
@@ -347,6 +352,9 @@ def collect_averages(
             )
             row = {**variables, **averages}
             rows.append(row)
+        except FileNotFoundError as exc:
+            _log_missing_output(entry, exc)
+            continue
         except Exception as exc:
             if strict:
                 raise
@@ -385,6 +393,7 @@ def collect_projavgs(
         end: End index for row slicing (exclusive) before averaging.
         step: Step for row slicing before averaging.
         strict: When True, raise on any bad run; when False, skip with a warning.
+            Missing output files are always skipped with an error log.
         progress: When True, show a progress bar during collection.
 
     Returns:
@@ -425,6 +434,9 @@ def collect_projavgs(
             for proj, averages in proj_means.items():
                 row = {**variables, **averages}
                 rows_by_proj.setdefault(proj, []).append(row)
+        except FileNotFoundError as exc:
+            _log_missing_output(entry, exc)
+            continue
         except Exception as exc:
             if strict:
                 raise
@@ -469,6 +481,7 @@ def collect_projcumulants(
         end: End index for row slicing (exclusive) before averaging.
         step: Step for row slicing before averaging.
         strict: When True, raise on any bad run; when False, skip with a warning.
+            Missing output files are always skipped with an error log.
         progress: When True, show a progress bar during collection.
 
     Returns:
@@ -506,6 +519,9 @@ def collect_projcumulants(
             for proj, averages in proj_means.items():
                 row = {**variables, **averages}
                 rows_by_proj.setdefault(proj, []).append(row)
+        except FileNotFoundError as exc:
+            _log_missing_output(entry, exc)
+            continue
         except Exception as exc:
             if strict:
                 raise
@@ -550,6 +566,7 @@ def collect_cumulants(
         end: End index for row slicing (exclusive) before averaging.
         step: Step for row slicing before averaging.
         strict: When True, raise on any bad run; when False, skip with a warning.
+            Missing output files are always skipped with an error log.
         progress: When True, show a progress bar during collection.
 
     Returns:
@@ -582,6 +599,9 @@ def collect_cumulants(
             )
             row = {**variables, **cumulants}
             rows.append(row)
+        except FileNotFoundError as exc:
+            _log_missing_output(entry, exc)
+            continue
         except Exception as exc:
             if strict:
                 raise
@@ -619,6 +639,7 @@ def collect_energies(
         end: End index for row slicing (exclusive) before averaging.
         step: Step for row slicing before averaging.
         strict: When True, raise on any bad run; when False, skip with a warning.
+            Missing output files are always skipped with an error log.
         progress: When True, show a progress bar during collection.
 
     Returns:
@@ -651,6 +672,9 @@ def collect_energies(
             )
             row = {**variables, **energies}
             rows.append(row)
+        except FileNotFoundError as exc:
+            _log_missing_output(entry, exc)
+            continue
         except Exception as exc:
             if strict:
                 raise
