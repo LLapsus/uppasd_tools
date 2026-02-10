@@ -10,4 +10,5 @@ This section documents the public Python API of ``uppasd_tools``.
    api/uppout
    api/structure
    api/visualize
+   api/analyze
    api/collect

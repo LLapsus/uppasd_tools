@@ -18,6 +18,7 @@ and the development of reproducible post-processing workflows in Python.
 - Reading and parsing of common UppASD output files, including atomic positions,
   magnetic moments, neighbor structures, and simulation results
 - Analysis of atomic pairs used for the calculation of exchange interactions
+- Analysis of UppASD results.
 - Interactive 3D visualization of atomic structures and magnetic configurations
   using **py3Dmol**
 - Collection and aggregation of data from multiple simulations to construct
@@ -29,6 +30,7 @@ and the development of reproducible post-processing workflows in Python.
 
 - `src/uppasd_tools/uppout.py`: Core `UppOut` reader. Scans a simulation output directory, detects the `simid`, and reads `*.out` files into pandas DataFrames.
 - `src/uppasd_tools/uppout_schema.py`: File prefix and column schema definitions used by the readers.
+- `src/uppasd_tools/analyze.py`: Analysis of UppASD outputs.
 - `src/uppasd_tools/collect.py`: Aggregation utilities for averaging results across multiple runs.
 - `src/uppasd_tools/visualize.py`: 3D visualization helpers using **py3Dmol**.
 - `src/uppasd_tools/structure.py`: Structure analysis helpers (e.g., neighbor lists).
