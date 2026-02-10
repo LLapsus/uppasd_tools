@@ -38,7 +38,23 @@ logger = logging.getLogger(__name__)
 
 class UppOut:
     """
-    Reader for UppASD output files within a simulation directory.
+    Main interface to UppASD simulation outputs.
+    
+    It scans an output directory, infers the simulation ID, and catalogs
+    which file types are available. When `coord` and `restart` files exist,
+    it loads basic metadata (counts and coordinate ranges) for quick access.
+
+    Attributes:
+        dir_path (Path): Path to the simulation output directory.
+        prefixes (list[str]): Sorted list of output file prefixes detected.
+        simid (str | None): Simulation ID inferred from files or provided by user.
+        num_atoms (int | None): Total number of atoms in the simulation.
+        num_atoms_cell (int | None): Number of atoms in the unit cell.
+        num_atom_types (int | None): Number of unique atom types.
+        num_ens (int | None): Number of ensembles in the simulation.
+        xrange (tuple[float, float] | None): (min, max) x-coordinates from coord file.
+        yrange (tuple[float, float] | None): (min, max) y-coordinates from coord file.
+        zrange (tuple[float, float] | None): (min, max) z-coordinates from coord file.
     """
 
     # Prefixes for different UppASD output files
@@ -132,7 +148,7 @@ class UppOut:
             df_restart = self.read_restart()
             self.num_ens = len(df_restart["ens_num"].unique())
 
-    def simdata(self) -> dict[str, object]:
+    def metadata(self) -> dict[str, object]:
         """
         Return simulation metadata as a dictionary.
         """
@@ -155,7 +171,7 @@ class UppOut:
         Return a formatted summary string of simulation metadata.
         """
 
-        data = self.simdata()
+        data = self.metadata()
         lines = [
             f"Output directory: {data['dir_path']}",
             f"Simulation ID: {data['simid']}",
