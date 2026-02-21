@@ -13,6 +13,7 @@ import logging
 import re
 import sys
 from pathlib import Path
+from typing import Literal, overload
 
 import pandas as pd
 
@@ -311,12 +312,35 @@ def _read_energy_mean(
 
 ##########################################################################################
 
+@overload
 def get_matching_directories(
     root: str | Path,
     name_template: str,
     *,
     sort: bool = True,
+    include_fields: Literal[False] = False,
 ) -> list[Path]:
+    ...
+
+
+@overload
+def get_matching_directories(
+    root: str | Path,
+    name_template: str,
+    *,
+    sort: bool = True,
+    include_fields: Literal[True],
+) -> tuple[list[Path], list[str]]:
+    ...
+
+
+def get_matching_directories(
+    root: str | Path,
+    name_template: str,
+    *,
+    sort: bool = True,
+    include_fields: bool = False,
+) -> list[Path] | tuple[list[Path], list[str]]:
     """
     Return run subdirectories matching a folder-name template.
 
@@ -325,15 +349,21 @@ def get_matching_directories(
         name_template: Folder name template with `{field}` placeholders used for
             matching (e.g., "run_T{T}_P{P}").
         sort: When True, return paths sorted by directory name.
+        include_fields: When True, also return the template placeholder names
+            in order of appearance.
 
     Returns:
-        List of matching run directory paths.
+        Either:
+        - List of matching run directory paths.
+        - Tuple of `(directories, fields)` when `include_fields=True`.
     """
     root_path = _ensure_root_dir(root)
-    name_pattern, _ = _compile_name_template(name_template)
+    name_pattern, fields = _compile_name_template(name_template)
     run_dirs = _find_run_dirs(root_path, name_pattern, name_template)
     if sort:
         run_dirs.sort(key=lambda path: path.name)
+    if include_fields:
+        return run_dirs, fields
     return run_dirs
 
 
