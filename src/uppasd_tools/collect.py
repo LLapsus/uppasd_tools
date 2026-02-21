@@ -319,6 +319,7 @@ def get_matching_directories(
     *,
     sort: bool = True,
     include_fields: Literal[False] = False,
+    include_values: Literal[False] = False,
 ) -> list[Path]:
     ...
 
@@ -330,7 +331,32 @@ def get_matching_directories(
     *,
     sort: bool = True,
     include_fields: Literal[True],
+    include_values: Literal[False] = False,
 ) -> tuple[list[Path], list[str]]:
+    ...
+
+
+@overload
+def get_matching_directories(
+    root: str | Path,
+    name_template: str,
+    *,
+    sort: bool = True,
+    include_fields: Literal[False] = False,
+    include_values: Literal[True],
+) -> tuple[list[Path], list[list[float | int | str]]]:
+    ...
+
+
+@overload
+def get_matching_directories(
+    root: str | Path,
+    name_template: str,
+    *,
+    sort: bool = True,
+    include_fields: Literal[True],
+    include_values: Literal[True],
+) -> tuple[list[Path], list[list[float | int | str]], list[str]]:
     ...
 
 
@@ -340,7 +366,13 @@ def get_matching_directories(
     *,
     sort: bool = True,
     include_fields: bool = False,
-) -> list[Path] | tuple[list[Path], list[str]]:
+    include_values: bool = False,
+) -> (
+    list[Path]
+    | tuple[list[Path], list[str]]
+    | tuple[list[Path], list[list[float | int | str]]]
+    | tuple[list[Path], list[list[float | int | str]], list[str]]
+):
     """
     Return run subdirectories matching a folder-name template.
 
@@ -351,20 +383,41 @@ def get_matching_directories(
         sort: When True, return paths sorted by directory name.
         include_fields: When True, also return the template placeholder names
             in order of appearance.
+        include_values: When True, also return the extracted parameter values
+            for each directory in template field order.
 
     Returns:
-        Either:
-        - List of matching run directory paths.
-        - Tuple of `(directories, fields)` when `include_fields=True`.
+        Depending on options:
+        - `directories`
+        - `(directories, fields)` when `include_fields=True`
+        - `(directories, values)` when `include_values=True`
+        - `(directories, values, fields)` when both are True
     """
     root_path = _ensure_root_dir(root)
     name_pattern, fields = _compile_name_template(name_template)
     run_dirs = _find_run_dirs(root_path, name_pattern, name_template)
+    matched: list[tuple[Path, list[float | int | str]]] = []
+    for run_dir in run_dirs:
+        match = name_pattern.match(run_dir.name)
+        if match is None:
+            continue
+        group_values = match.groupdict()
+        values = [_coerce_template_value(group_values[field]) for field in fields]
+        matched.append((run_dir, values))
+
     if sort:
-        run_dirs.sort(key=lambda path: path.name)
+        matched.sort(key=lambda item: item[0].name)
+
+    directories = [item[0] for item in matched]
+    values_by_dir = [item[1] for item in matched]
+
+    if include_values and include_fields:
+        return directories, values_by_dir, fields
+    if include_values:
+        return directories, values_by_dir
     if include_fields:
-        return run_dirs, fields
-    return run_dirs
+        return directories, fields
+    return directories
 
 
 def collect_averages(
