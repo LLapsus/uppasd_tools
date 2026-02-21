@@ -42,6 +42,7 @@ FLOAT_RE = re.compile(r"^-?(?:\d+\.\d*|\d*\.\d+|\d+)(?:[eE][+-]?\d+)?$")
 ##########################################################################################
 
 def _ensure_root_dir(root: str | Path) -> Path:
+    """Validate and return the root directory used for run discovery."""
     root_path = Path(root)
     if not root_path.exists():
         msg = f'Root path "{root_path}" does not exist.'
@@ -59,6 +60,7 @@ def _find_run_dirs(
     name_pattern: re.Pattern[str],
     name_template: str,
 ) -> list[Path]:
+    """Return run subdirectories whose names match the compiled template."""
     run_dirs = [
         entry
         for entry in root_path.iterdir()
@@ -74,10 +76,17 @@ def _find_run_dirs(
 
 
 def _log_missing_output(entry: Path, exc: FileNotFoundError) -> None:
+    """Emit a consistent error message for missing run output files."""
     logger.error("Missing output file for run %s: %s", entry, exc)
 
 
 def _compile_name_template(template: str) -> tuple[re.Pattern[str], list[str]]:
+    """
+    Convert a folder template into a regex and ordered placeholder names.
+
+    Example:
+        "run_T{T}_P{P}" -> pattern with named groups "T" and "P".
+    """
     fields = [match.group(1) for match in TEMPLATE_FIELD_RE.finditer(template)]
     if not fields:
         raise ValueError("Template must include at least one {field} placeholder.")
@@ -98,6 +107,7 @@ def _compile_name_template(template: str) -> tuple[re.Pattern[str], list[str]]:
 
 
 def _coerce_template_value(value: str) -> float | int | str:
+    """Cast extracted template values to int/float when possible."""
     if INT_RE.match(value):
         return int(value)
     if FLOAT_RE.match(value):
@@ -106,6 +116,7 @@ def _coerce_template_value(value: str) -> float | int | str:
 
 
 def _iter_with_progress(iterable, enabled: bool, desc: str | None = None):
+    """Wrap an iterable with tqdm or a simple stderr progress indicator."""
     if enabled and tqdm is not None:
         return tqdm(iterable, desc=desc)
     if enabled:
@@ -114,10 +125,12 @@ def _iter_with_progress(iterable, enabled: bool, desc: str | None = None):
 
 
 def _simple_progress(iterable, desc: str | None = None):
+    """Fallback progress printer used when tqdm is unavailable."""
     total = len(iterable) if hasattr(iterable, "__len__") else None
     label = desc or "progress"
 
     def _gen():
+        """Yield items while printing current iteration count to stderr."""
         count = 0
         for item in iterable:
             count += 1
@@ -139,6 +152,7 @@ def _read_averages_mean(
     end: int | None = None,
     step: int | None = None,
 ) -> dict[str, float]:
+    """Read `averages.*.out` and return sliced mean values for scalar columns."""
     run_path = Path(run_dir)
     uppout = UppOut(run_path, simid=simid) if simid else UppOut(run_path)
     frame = uppout.read_averages()
@@ -169,6 +183,7 @@ def _read_projavgs_mean(
     end: int | None = None,
     step: int | None = None,
 ) -> dict[int, dict[str, float]]:
+    """Read `projavgs.*.out` and return per-projection sliced means."""
     run_path = Path(run_dir)
     uppout = UppOut(run_path, simid=simid) if simid else UppOut(run_path)
     frames = uppout.read_projavgs()
@@ -212,6 +227,7 @@ def _read_projcumulants_mean(
     end: int | None = None,
     step: int | None = None,
 ) -> dict[int, dict[str, float]]:
+    """Read `projcumulants.*.out` and return per-projection sliced means."""
     run_path = Path(run_dir)
     uppout = UppOut(run_path, simid=simid) if simid else UppOut(run_path)
     frames = uppout.read_projcumulants()
@@ -251,6 +267,7 @@ def _read_cumulants_mean(
     end: int | None = None,
     step: int | None = None,
 ) -> dict[str, float]:
+    """Read `cumulants.*.out` and return sliced mean values."""
     run_path = Path(run_dir)
     uppout = UppOut(run_path, simid=simid) if simid else UppOut(run_path)
     frame = uppout.read_cumulants()
@@ -275,6 +292,7 @@ def _read_energy_mean(
     end: int | None = None,
     step: int | None = None,
 ) -> dict[str, float]:
+    """Read `stdenergy.*.out` and return sliced mean values."""
     run_path = Path(run_dir)
     uppout = UppOut(run_path, simid=simid) if simid else UppOut(run_path)
     frame = uppout.read_energy()
@@ -292,6 +310,32 @@ def _read_energy_mean(
     return {column: float(mean_row[column]) for column in mean_columns}
 
 ##########################################################################################
+
+def find_run_dirs(
+    root: str | Path,
+    name_template: str,
+    *,
+    sort: bool = True,
+) -> list[Path]:
+    """
+    Return run subdirectories matching a folder-name template.
+
+    Parameters:
+        root: Directory containing run subdirectories.
+        name_template: Folder name template with `{field}` placeholders used for
+            matching (e.g., "run_T{T}_P{P}").
+        sort: When True, return paths sorted by directory name.
+
+    Returns:
+        List of matching run directory paths.
+    """
+    root_path = _ensure_root_dir(root)
+    name_pattern, _ = _compile_name_template(name_template)
+    run_dirs = _find_run_dirs(root_path, name_pattern, name_template)
+    if sort:
+        run_dirs.sort(key=lambda path: path.name)
+    return run_dirs
+
 
 def collect_averages(
     root: str | Path,
