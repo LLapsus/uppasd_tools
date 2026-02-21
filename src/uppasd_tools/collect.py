@@ -318,7 +318,7 @@ def get_matching_directories(
     sort: bool = True,
 ) -> dict[
     str,
-    list[dict[str, Path | float | int | str]] | list[float | int | str],
+    list[Path] | list[float | int | str],
 ]:
     """
     Return run subdirectories matching a folder-name template.
@@ -331,8 +331,7 @@ def get_matching_directories(
 
     Returns:
         Dictionary with:
-        - `directories`: list of dictionaries containing `directory` and all
-          extracted placeholder values for each matched run directory.
+        - `directories`: list of matching run directory paths.
         - one key per placeholder field: list of values in directory order.
     """
     root_path = _ensure_root_dir(root)
@@ -357,20 +356,20 @@ def get_matching_directories(
     if sort:
         matched.sort(key=lambda item: item[0].name)
 
-    directory_rows: list[dict[str, Path | float | int | str]] = []
+    directories: list[Path] = []
     field_values: dict[str, list[float | int | str]] = {
         field: [] for field in fields
     }
 
     for run_dir, values_by_field in matched:
-        directory_rows.append({"directory": run_dir, **values_by_field})
+        directories.append(run_dir)
         for field in fields:
             field_values[field].append(values_by_field[field])
 
     output: dict[
         str,
-        list[dict[str, Path | float | int | str]] | list[float | int | str],
-    ] = {"directories": directory_rows}
+        list[Path] | list[float | int | str],
+    ] = {"directories": directories}
     output.update(field_values)
     return output
 
