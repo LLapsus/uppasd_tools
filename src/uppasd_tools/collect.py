@@ -316,7 +316,10 @@ def get_matching_directories(
     name_template: str,
     *,
     sort: bool = True,
-) -> tuple[list[Path], list[list[float | int | str]], list[str]]:
+) -> dict[
+    str,
+    list[dict[str, Path | float | int | str]] | list[float | int | str],
+]:
     """
     Return run subdirectories matching a folder-name template.
 
@@ -327,29 +330,49 @@ def get_matching_directories(
         sort: When True, return paths sorted by directory name.
 
     Returns:
-        Tuple of:
-        - `directories`: matching run directory paths
-        - `values`: extracted parameter values per directory in template order
-        - `fields`: template placeholder names in order of appearance
+        Dictionary with:
+        - `directories`: list of dictionaries containing `directory` and all
+          extracted placeholder values for each matched run directory.
+        - one key per placeholder field: list of values in directory order.
     """
     root_path = _ensure_root_dir(root)
     name_pattern, fields = _compile_name_template(name_template)
+    if "directories" in fields:
+        raise ValueError(
+            'Template placeholder "directories" is reserved by the '
+            "get_matching_directories output schema."
+        )
     run_dirs = _find_run_dirs(root_path, name_pattern, name_template)
-    matched: list[tuple[Path, list[float | int | str]]] = []
+    matched: list[tuple[Path, dict[str, float | int | str]]] = []
     for run_dir in run_dirs:
         match = name_pattern.match(run_dir.name)
         if match is None:
             continue
         group_values = match.groupdict()
-        values = [_coerce_template_value(group_values[field]) for field in fields]
-        matched.append((run_dir, values))
+        values_by_field = {
+            field: _coerce_template_value(group_values[field]) for field in fields
+        }
+        matched.append((run_dir, values_by_field))
 
     if sort:
         matched.sort(key=lambda item: item[0].name)
 
-    directories = [item[0] for item in matched]
-    values_by_dir = [item[1] for item in matched]
-    return directories, values_by_dir, fields
+    directory_rows: list[dict[str, Path | float | int | str]] = []
+    field_values: dict[str, list[float | int | str]] = {
+        field: [] for field in fields
+    }
+
+    for run_dir, values_by_field in matched:
+        directory_rows.append({"directory": run_dir, **values_by_field})
+        for field in fields:
+            field_values[field].append(values_by_field[field])
+
+    output: dict[
+        str,
+        list[dict[str, Path | float | int | str]] | list[float | int | str],
+    ] = {"directories": directory_rows}
+    output.update(field_values)
+    return output
 
 
 def collect_averages(
