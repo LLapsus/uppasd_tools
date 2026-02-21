@@ -311,7 +311,7 @@ def _read_energy_mean(
 
 ##########################################################################################
 
-def find_run_dirs(
+def get_matching_directories(
     root: str | Path,
     name_template: str,
     *,
