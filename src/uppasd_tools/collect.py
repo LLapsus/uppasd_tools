@@ -330,7 +330,7 @@ def get_matching_directories(
         sort: When True, return paths sorted by directory name.
 
     Returns:
-        Dictionary with:
+        Dictionary with
         - `directories`: list of matching run directory paths.
         - one key per placeholder field: list of values in directory order.
     """
